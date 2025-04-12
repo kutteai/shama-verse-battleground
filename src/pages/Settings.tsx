@@ -19,7 +19,7 @@ import {
   UserCheck, 
   Flag, 
   ToggleLeft,
-  Webhooks,
+  Webhook,
   Users,
   Award,
   Filter
@@ -98,7 +98,7 @@ const Settings = () => {
               <span>Features</span>
             </TabsTrigger>
             <TabsTrigger value="api" className="flex items-center gap-2">
-              <Webhooks size={16} />
+              <Webhook size={16} />
               <span>API</span>
             </TabsTrigger>
           </TabsList>
