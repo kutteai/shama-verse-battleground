@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -45,7 +44,9 @@ import {
   ThumbsUp,
   Share2,
   ShieldCheck,
-  ShieldAlert
+  ShieldAlert,
+  ArrowUp, // Added for trending indicators
+  ChevronUp // Alternative trending indicator
 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -640,7 +641,7 @@ const Freestyles = () => {
                       <CardContent className="py-2">
                         <div className="text-3xl font-bold">1,248</div>
                         <div className="flex items-center text-sm text-green-500">
-                          <TrendingUp size={14} className="mr-1" />
+                          <ChevronUp size={14} className="mr-1" />
                           <span>+12% this month</span>
                         </div>
                       </CardContent>
@@ -653,7 +654,7 @@ const Freestyles = () => {
                       <CardContent className="py-2">
                         <div className="text-3xl font-bold">24</div>
                         <div className="flex items-center text-sm text-green-500">
-                          <TrendingUp size={14} className="mr-1" />
+                          <ChevronUp size={14} className="mr-1" />
                           <span>+8% vs yesterday</span>
                         </div>
                       </CardContent>
@@ -820,82 +821,4 @@ const Freestyles = () => {
                       </div>
                       
                       <div className="flex flex-col gap-1 items-center justify-center p-3 border rounded-md">
-                        <Gift size={20} className="text-muted-foreground mb-1" />
-                        <div className="text-2xl font-bold">{selectedFreestyle.gifts}</div>
-                        <div className="text-xs text-muted-foreground">Gifts</div>
-                      </div>
-                      
-                      <div className="flex flex-col gap-1 items-center justify-center p-3 border rounded-md">
-                        <BarChart3 size={20} className="text-muted-foreground mb-1" />
-                        <div className="text-2xl font-bold">
-                          {Math.round(
-                            ((selectedFreestyle.likes + selectedFreestyle.comments + selectedFreestyle.shares) / selectedFreestyle.views) * 100
-                          )}%
-                        </div>
-                        <div className="text-xs text-muted-foreground">Engagement Rate</div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader className="py-3">
-                    <CardTitle className="text-base">Content Safety</CardTitle>
-                  </CardHeader>
-                  <CardContent className="py-0">
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-2">
-                            <ShieldCheck size={18} />
-                            <span>NSFW Content Score</span>
-                          </div>
-                          <span className="font-medium">{Math.round(selectedFreestyle.nsfw_score * 100)}%</span>
-                        </div>
-                        <Progress 
-                          value={selectedFreestyle.nsfw_score * 100} 
-                          className="h-2"
-                          indicatorClassName={selectedFreestyle.nsfw_score > 0.5 ? "bg-red-500" : "bg-green-500"}
-                        />
-                      </div>
-                      
-                      <div className="p-3 border rounded-md">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="font-medium">AI Content Analysis</div>
-                          <Badge variant={selectedFreestyle.nsfw_score > 0.5 ? "destructive" : "outline"}>
-                            {selectedFreestyle.nsfw_score > 0.5 ? "Flagged" : "Approved"}
-                          </Badge>
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {selectedFreestyle.nsfw_score > 0.5 
-                            ? "This content may violate community guidelines. Review recommended."
-                            : "This content appears to comply with community guidelines."
-                          }
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Checkbox id="confirm-review" />
-                          <label htmlFor="confirm-review" className="text-sm">
-                            I've reviewed this content and confirm it follows community guidelines
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          )}
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setFreestyleDetailsOpen(false)}>Close</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </DashboardLayout>
-  );
-};
-
-export default Freestyles;
+                        <Gift size={20

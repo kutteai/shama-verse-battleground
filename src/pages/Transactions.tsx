@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -48,7 +47,8 @@ import {
   ChevronUp,
   CircleDollarSign,
   Tag,
-  AlertCircle
+  AlertCircle,
+  Music
 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -858,90 +858,3 @@ const Transactions = () => {
                   <div>
                     <div className="text-sm text-muted-foreground">Platform Fee:</div>
                     <div className="text-lg">
-                      {formatCurrency(selectedTransaction.fee)}
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="p-3 bg-muted rounded-md flex justify-between">
-                  <span className="font-medium">Net Amount:</span>
-                  <span className="font-bold">{formatCurrency(selectedTransaction.net)}</span>
-                </div>
-                
-                {selectedTransaction.payment_method && (
-                  <div className="space-y-1 pt-2">
-                    <div className="text-sm text-muted-foreground">Payment Method:</div>
-                    <div className="flex items-center">
-                      {selectedTransaction.payment_method === "visa" && <div className="bg-blue-100 text-blue-800 px-2 py-1 text-xs rounded-md mr-2">VISA</div>}
-                      {selectedTransaction.payment_method === "mastercard" && <div className="bg-red-100 text-red-800 px-2 py-1 text-xs rounded-md mr-2">MASTERCARD</div>}
-                      {selectedTransaction.payment_method === "amex" && <div className="bg-green-100 text-green-800 px-2 py-1 text-xs rounded-md mr-2">AMEX</div>}
-                      {selectedTransaction.payment_method === "bank_transfer" && <div className="bg-purple-100 text-purple-800 px-2 py-1 text-xs rounded-md mr-2">BANK</div>}
-                      <span>{selectedTransaction.payment_details}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-              
-              {selectedTransaction.error_message && (
-                <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-3 flex items-start">
-                  <AlertCircle className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <div className="font-medium">Transaction Failed</div>
-                    <div className="text-sm">{selectedTransaction.error_message}</div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          <DialogFooter>
-            {selectedTransaction && selectedTransaction.status === "failed" && (
-              <Button variant="outline" className="mr-auto">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Retry Transaction
-              </Button>
-            )}
-            <Button variant="outline" onClick={() => setTransactionDetailsOpen(false)}>Close</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </DashboardLayout>
-  );
-};
-
-// Mock component for DateRangePicker since it's not in the provided components
-const DateRangePicker = ({ className, value, onValueChange }) => {
-  return (
-    <div className={className}>
-      <Button 
-        variant="outline" 
-        className="w-full justify-start text-left font-normal"
-        onClick={() => {
-          // In a real implementation, this would open a date picker
-          // For now, we'll just simulate setting some dates
-          const today = new Date();
-          const sevenDaysAgo = new Date(today);
-          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-          
-          onValueChange({ 
-            from: sevenDaysAgo.toISOString(),
-            to: today.toISOString()
-          });
-        }}
-      >
-        <CalendarDays className="mr-2 h-4 w-4" />
-        {value?.from && value?.to ? (
-          <>
-            <span>{format(new Date(value.from), "LLL dd, y")}</span>
-            <span className="mx-2">-</span>
-            <span>{format(new Date(value.to), "LLL dd, y")}</span>
-          </>
-        ) : (
-          <span>Pick a date range</span>
-        )}
-      </Button>
-    </div>
-  );
-};
-
-export default Transactions;
