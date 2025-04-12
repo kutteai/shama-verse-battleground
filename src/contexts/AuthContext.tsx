@@ -1,65 +1,80 @@
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { toast } from "sonner";
+import React, { createContext, useContext, ReactNode, useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
-interface User {
+// Define the user type with isAdmin property
+export interface User {
   id: string;
-  username: string;
+  name: string;
   email: string;
-  user_type: string;
+  role: string;
+  avatar?: string;
+  isAdmin: boolean;
 }
 
 interface AuthContextType {
   user: User | null;
+  isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
-  isAuthenticated: boolean;
-  isAdmin: boolean;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const defaultContextValue: AuthContextType = {
+  user: null,
+  isAuthenticated: false,
+  isLoading: true,
+  login: async () => {},
+  logout: () => {},
+};
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+const AuthContext = createContext<AuthContextType>(defaultContextValue);
+
+export const useAuth = () => useContext(AuthContext);
+
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    // Check if user is already logged in
-    const storedUser = localStorage.getItem('shamaUser');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error("Failed to parse stored user data", error);
-        localStorage.removeItem('shamaUser');
-      }
+    // Check if there's a user in localStorage (simulating persisted auth)
+    const savedUser = localStorage.getItem('user');
+    
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
     }
+    
     setIsLoading(false);
   }, []);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
+    
     try {
-      // Mock API call - replace with actual API call in production
-      // In a real app, this would be an API call to your backend
-      if (email === 'admin@shamachallenge.com' && password === 'admin123') {
-        const userData: User = {
-          id: '1',
-          username: 'admin',
-          email: 'admin@shamachallenge.com',
-          user_type: 'admin'
-        };
-        setUser(userData);
-        localStorage.setItem('shamaUser', JSON.stringify(userData));
-        toast.success("Welcome back, Admin!");
-      } else {
-        toast.error("Invalid credentials or not an admin account");
-        throw new Error("Invalid credentials or not an admin account");
-      }
+      // Simulate API call with 500ms delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Mock user data - in a real app this would come from your backend
+      const mockUser: User = {
+        id: "usr_12345",
+        name: "Admin User",
+        email: email,
+        role: "admin",
+        avatar: "https://i.pravatar.cc/150?img=68",
+        isAdmin: true
+      };
+      
+      setUser(mockUser);
+      localStorage.setItem('user', JSON.stringify(mockUser));
+      
+      // Redirect to dashboard or the page they were trying to access
+      const origin = location.state?.from?.pathname || '/dashboard';
+      navigate(origin);
     } catch (error) {
-      console.error("Login failed", error);
-      throw error;
+      console.error('Login failed:', error);
+      throw new Error('Invalid email or password');
     } finally {
       setIsLoading(false);
     }
@@ -67,31 +82,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('shamaUser');
-    toast.info("You've been logged out");
+    localStorage.removeItem('user');
+    navigate('/login');
   };
 
-  const isAuthenticated = !!user;
-  const isAdmin = user?.user_type === 'admin';
+  const value = {
+    user,
+    isAuthenticated: !!user,
+    isLoading,
+    login,
+    logout,
+  };
 
-  return (
-    <AuthContext.Provider value={{ 
-      user, 
-      isLoading, 
-      login, 
-      logout, 
-      isAuthenticated,
-      isAdmin
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
-}
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
+
+export default AuthContext;
