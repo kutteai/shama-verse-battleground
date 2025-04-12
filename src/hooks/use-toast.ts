@@ -1,3 +1,4 @@
+
 import * as React from "react"
 
 import type {
@@ -166,6 +167,35 @@ function toast({ ...props }: Toast) {
     dismiss,
     update,
   }
+}
+
+// Add variant methods to toast function
+toast.success = (props: string | Toast) => {
+  if (typeof props === "string") {
+    return toast({ title: props, variant: "default" })
+  }
+  return toast({ ...props, variant: "default" })
+}
+
+toast.info = (props: string | Toast) => {
+  if (typeof props === "string") {
+    return toast({ title: props, variant: "default" })
+  }
+  return toast({ ...props, variant: "default" })
+}
+
+toast.warning = (props: string | Toast) => {
+  if (typeof props === "string") {
+    return toast({ title: props, variant: "default" })
+  }
+  return toast({ ...props, variant: "default" })
+}
+
+toast.error = (props: string | Toast) => {
+  if (typeof props === "string") {
+    return toast({ title: props, variant: "destructive" })
+  }
+  return toast({ ...props, variant: "destructive" })
 }
 
 function useToast() {
