@@ -46,6 +46,17 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useToast } from "@/hooks/use-toast";
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle 
+} from "@/components/ui/alert-dialog";
 
 // Mock data for challenges
 const mockChallenges = [
@@ -133,12 +144,117 @@ const mockChallenges = [
 
 const Challenges = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState("all");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  
+  // Dialog states
+  const [isPauseDialogOpen, setPauseDialogOpen] = useState(false);
+  const [isBanDialogOpen, setBanDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedChallenge, setSelectedChallenge] = useState<any>(null);
+
+  // Action handlers
+  const handleViewDetails = (challenge: any) => {
+    toast({
+      title: "View Challenge Details",
+      description: `Viewing details for ${challenge.title}`,
+    });
+    // In a real app, you would navigate to a details page
+    // navigate(`/challenges/${challenge.id}`);
+  };
+
+  const handleViewVotingAnalytics = (challenge: any) => {
+    toast({
+      title: "Voting Analytics",
+      description: `Viewing voting analytics for ${challenge.title}`,
+    });
+    // In a real app, you would navigate to analytics page or show a modal
+    // navigate(`/challenges/${challenge.id}/analytics`);
+  };
+
+  const handleViewGiftDonations = (challenge: any) => {
+    toast({
+      title: "Gift Donations",
+      description: `Viewing gift donations for ${challenge.title} (${challenge.giftTotal} total)`,
+    });
+    // In a real app, you would navigate to donations page or show a modal
+    // navigate(`/challenges/${challenge.id}/donations`);
+  };
+
+  const openPauseDialog = (challenge: any) => {
+    setSelectedChallenge(challenge);
+    setPauseDialogOpen(true);
+  };
+
+  const handlePauseChallenge = () => {
+    if (!selectedChallenge) return;
+    
+    // In a real app, you would call an API to pause the challenge
+    toast({
+      title: "Challenge Paused",
+      description: `${selectedChallenge.title} has been paused`,
+    });
+    
+    // Update challenge status in UI
+    const updatedChallenges = mockChallenges.map(challenge => 
+      challenge.id === selectedChallenge.id 
+        ? { ...challenge, status: "pending" }
+        : challenge
+    );
+    
+    // Close dialog
+    setPauseDialogOpen(false);
+  };
+
+  const openBanDialog = (challenge: any) => {
+    setSelectedChallenge(challenge);
+    setBanDialogOpen(true);
+  };
+
+  const handleBanChallenge = () => {
+    if (!selectedChallenge) return;
+    
+    // In a real app, you would call an API to ban the challenge
+    toast({
+      title: "Challenge Banned",
+      description: `${selectedChallenge.title} has been banned`,
+      variant: "destructive"
+    });
+    
+    // Update challenge status in UI
+    const updatedChallenges = mockChallenges.map(challenge => 
+      challenge.id === selectedChallenge.id 
+        ? { ...challenge, status: "flagged" }
+        : challenge
+    );
+    
+    // Close dialog
+    setBanDialogOpen(false);
+  };
+
+  const openDeleteDialog = (challenge: any) => {
+    setSelectedChallenge(challenge);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteChallenge = () => {
+    if (!selectedChallenge) return;
+    
+    // In a real app, you would call an API to delete the challenge
+    toast({
+      title: "Challenge Deleted",
+      description: `${selectedChallenge.title} has been deleted`,
+      variant: "destructive"
+    });
+    
+    // Close dialog
+    setDeleteDialogOpen(false);
+  };
 
   // Filter challenges based on all filters
   const filteredChallenges = mockChallenges.filter((challenge) => {
@@ -407,27 +523,21 @@ const Challenges = () => {
                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                 <DropdownMenuItem
                                   className="flex items-center gap-2 cursor-pointer"
-                                  onClick={() => {
-                                    // View details
-                                  }}
+                                  onClick={() => handleViewDetails(challenge)}
                                 >
                                   <Eye size={16} />
                                   <span>View Details</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   className="flex items-center gap-2 cursor-pointer"
-                                  onClick={() => {
-                                    // View voting analytics
-                                  }}
+                                  onClick={() => handleViewVotingAnalytics(challenge)}
                                 >
                                   <BarChart3 size={16} />
                                   <span>Voting Analytics</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   className="flex items-center gap-2 cursor-pointer"
-                                  onClick={() => {
-                                    // View gift donations
-                                  }}
+                                  onClick={() => handleViewGiftDonations(challenge)}
                                 >
                                   <Gift size={16} />
                                   <span>Gift Donations</span>
@@ -438,9 +548,7 @@ const Challenges = () => {
                                 {challenge.status === "ongoing" && (
                                   <DropdownMenuItem
                                     className="flex items-center gap-2 cursor-pointer text-yellow-500"
-                                    onClick={() => {
-                                      // Pause challenge
-                                    }}
+                                    onClick={() => openPauseDialog(challenge)}
                                   >
                                     <PauseCircle size={16} />
                                     <span>Pause Challenge</span>
@@ -449,9 +557,7 @@ const Challenges = () => {
 
                                 <DropdownMenuItem
                                   className="flex items-center gap-2 cursor-pointer text-red-500"
-                                  onClick={() => {
-                                    // Ban challenge
-                                  }}
+                                  onClick={() => openBanDialog(challenge)}
                                 >
                                   <Ban size={16} />
                                   <span>Ban Challenge</span>
@@ -459,9 +565,7 @@ const Challenges = () => {
 
                                 <DropdownMenuItem
                                   className="flex items-center gap-2 cursor-pointer text-red-700"
-                                  onClick={() => {
-                                    // Delete challenge
-                                  }}
+                                  onClick={() => openDeleteDialog(challenge)}
                                 >
                                   <Trash2 size={16} />
                                   <span>Delete Challenge</span>
@@ -523,6 +627,87 @@ const Challenges = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Pause Challenge Dialog */}
+      <AlertDialog open={isPauseDialogOpen} onOpenChange={setPauseDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Pause Challenge</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to pause this challenge? 
+              {selectedChallenge && (
+                <span className="font-medium block mt-2">
+                  "{selectedChallenge.title}"
+                </span>
+              )}
+              This will temporarily suspend voting and participation.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handlePauseChallenge}
+              className="bg-yellow-500 hover:bg-yellow-600"
+            >
+              Pause Challenge
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Ban Challenge Dialog */}
+      <AlertDialog open={isBanDialogOpen} onOpenChange={setBanDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Ban Challenge</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to ban this challenge?
+              {selectedChallenge && (
+                <span className="font-medium block mt-2">
+                  "{selectedChallenge.title}"
+                </span>
+              )}
+              This will flag it as inappropriate and hide it from public view.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBanChallenge}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              Ban Challenge
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Challenge Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Challenge</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to permanently delete this challenge?
+              {selectedChallenge && (
+                <span className="font-medium block mt-2">
+                  "{selectedChallenge.title}"
+                </span>
+              )}
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteChallenge}
+              className="bg-red-700 hover:bg-red-800"
+            >
+              Delete Challenge
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 };
