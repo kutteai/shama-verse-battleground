@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { Mic, Crown, Award, Flame, Star, Heart, Gem, Plus, Trash2, Edit, Search } from "lucide-react";
+import { Mic, Crown, Award, Flame, Star, Heart, Gem, Plus, Trash2, Edit, Search, Upload, Image } from "lucide-react";
 import { toast } from "sonner";
 
 // Mock gift data
@@ -18,7 +18,8 @@ const mockGifts = [
     icon: <Mic className="h-8 w-8 text-yellow-500" />, 
     value: 50, 
     description: "Show support with this high-value golden microphone.", 
-    popularity: 85
+    popularity: 85,
+    imageUrl: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&q=80&w=100"
   },
   { 
     id: 2, 
@@ -26,7 +27,8 @@ const mockGifts = [
     icon: <Crown className="h-8 w-8 text-purple-500" />, 
     value: 100, 
     description: "Crown your favorite artist with this royal gift.", 
-    popularity: 92
+    popularity: 92,
+    imageUrl: "https://images.unsplash.com/photo-1582562124811-c09040d0a901?auto=format&fit=crop&q=80&w=100"
   },
   { 
     id: 3, 
@@ -34,7 +36,8 @@ const mockGifts = [
     icon: <Award className="h-8 w-8 text-blue-500" />, 
     value: 75, 
     description: "Award excellence with this prestigious trophy.", 
-    popularity: 78
+    popularity: 78,
+    imageUrl: "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?auto=format&fit=crop&q=80&w=100"
   },
   { 
     id: 4, 
@@ -42,7 +45,8 @@ const mockGifts = [
     icon: <Flame className="h-8 w-8 text-red-500" />, 
     value: 20, 
     description: "Let them know their freestyle is fire!", 
-    popularity: 95
+    popularity: 95,
+    imageUrl: "https://images.unsplash.com/photo-1500673922987-e212871fec22?auto=format&fit=crop&q=80&w=100"
   },
   { 
     id: 5, 
@@ -50,7 +54,8 @@ const mockGifts = [
     icon: <Star className="h-8 w-8 text-yellow-400" />, 
     value: 30, 
     description: "Show appreciation with a shining star.", 
-    popularity: 88
+    popularity: 88,
+    imageUrl: null
   },
   { 
     id: 6, 
@@ -58,7 +63,8 @@ const mockGifts = [
     icon: <Heart className="h-8 w-8 text-pink-500" />, 
     value: 15, 
     description: "Send love with this heartfelt gift.", 
-    popularity: 91
+    popularity: 91,
+    imageUrl: null
   },
   { 
     id: 7, 
@@ -66,7 +72,8 @@ const mockGifts = [
     icon: <Gem className="h-8 w-8 text-cyan-400" />, 
     value: 200, 
     description: "The ultimate premium gift for the best of the best.", 
-    popularity: 70
+    popularity: 70,
+    imageUrl: null
   }
 ];
 
@@ -83,6 +90,8 @@ const giftTransactions = [
 const Gifts = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddGiftOpen, setIsAddGiftOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [newGift, setNewGift] = useState({
     name: "",
     value: "",
@@ -93,11 +102,37 @@ const Gifts = () => {
     gift.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleAddGift = () => {
-    // Add validation here in a real app
+    // Validate form
+    if (!newGift.name || !newGift.value) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    // In a real app, we would upload the image to S3 here
+    // For now, we'll simulate a successful upload
     toast.success(`New gift "${newGift.name}" added successfully!`);
+    
+    if (selectedImage) {
+      toast.info(`Image "${selectedImage.name}" would be uploaded to S3 in production`);
+    }
+    
     setIsAddGiftOpen(false);
     setNewGift({ name: "", value: "", description: "" });
+    setSelectedImage(null);
+    setImagePreview(null);
   };
 
   return (
@@ -133,7 +168,7 @@ const Gifts = () => {
                 <div className="grid gap-4 py-4">
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="name" className="text-right">
-                      Name
+                      Name *
                     </Label>
                     <Input
                       id="name"
@@ -144,7 +179,7 @@ const Gifts = () => {
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="value" className="text-right">
-                      Value ($)
+                      Value ($) *
                     </Label>
                     <Input
                       id="value"
@@ -165,9 +200,54 @@ const Gifts = () => {
                       className="col-span-3"
                     />
                   </div>
+                  <div className="grid grid-cols-4 items-start gap-4">
+                    <Label htmlFor="image" className="text-right pt-2">
+                      Image
+                    </Label>
+                    <div className="col-span-3 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="flex items-center gap-2"
+                          onClick={() => document.getElementById('image-upload')?.click()}
+                        >
+                          <Upload size={16} />
+                          Upload
+                        </Button>
+                        <span className="text-sm text-muted-foreground">
+                          {selectedImage ? selectedImage.name : "No file selected"}
+                        </span>
+                        <Input 
+                          id="image-upload" 
+                          type="file" 
+                          accept="image/*" 
+                          className="hidden"
+                          onChange={handleImageChange}
+                        />
+                      </div>
+                      {imagePreview && (
+                        <div className="border rounded-md p-2 w-full max-w-[200px]">
+                          <img 
+                            src={imagePreview} 
+                            alt="Preview" 
+                            className="w-full h-auto object-cover rounded"
+                          />
+                        </div>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        Image will be stored on S3 in production. Recommended size: 200x200px.
+                      </p>
+                    </div>
+                  </div>
                 </div>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsAddGiftOpen(false)}>Cancel</Button>
+                  <Button variant="outline" onClick={() => {
+                    setIsAddGiftOpen(false);
+                    setSelectedImage(null);
+                    setImagePreview(null);
+                    setNewGift({ name: "", value: "", description: "" });
+                  }}>Cancel</Button>
                   <Button onClick={handleAddGift}>Add Gift</Button>
                 </DialogFooter>
               </DialogContent>
@@ -201,9 +281,19 @@ const Gifts = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="flex items-center gap-4 mb-4">
-                      <div className="p-4 bg-muted rounded-lg">
-                        {gift.icon}
-                      </div>
+                      {gift.imageUrl ? (
+                        <div className="p-1 bg-muted rounded-lg w-16 h-16 flex items-center justify-center">
+                          <img 
+                            src={gift.imageUrl}
+                            alt={gift.name}
+                            className="w-full h-full object-cover rounded"
+                          />
+                        </div>
+                      ) : (
+                        <div className="p-4 bg-muted rounded-lg w-16 h-16 flex items-center justify-center">
+                          {gift.icon}
+                        </div>
+                      )}
                       <div>
                         <div className="text-2xl font-bold">${gift.value}</div>
                         <div className="text-sm text-muted-foreground">
@@ -217,7 +307,10 @@ const Gifts = () => {
                     <div className="text-sm text-muted-foreground">
                       ID: {gift.id}
                     </div>
-                    <Button variant="outline" size="sm">View Details</Button>
+                    <Button variant="outline" size="sm" className="flex items-center gap-2">
+                      <Image size={14} />
+                      {gift.imageUrl ? "View Image" : "Add Image"}
+                    </Button>
                   </CardFooter>
                 </Card>
               ))}

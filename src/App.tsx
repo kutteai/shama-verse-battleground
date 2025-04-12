@@ -12,6 +12,12 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Users from "./pages/Users";
 import Gifts from "./pages/Gifts";
+import Challenges from "./pages/Challenges";
+import Freestyles from "./pages/Freestyles";
+import Reports from "./pages/Reports";
+import Transactions from "./pages/Transactions";
+import Notifications from "./pages/Notifications";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
 
@@ -48,6 +54,42 @@ const App = () => (
             <Route path="/gifts" element={
               <ProtectedRoute>
                 <Gifts />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/challenges" element={
+              <ProtectedRoute>
+                <Challenges />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/freestyles" element={
+              <ProtectedRoute>
+                <Freestyles />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/reports" element={
+              <ProtectedRoute>
+                <Reports />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/transactions" element={
+              <ProtectedRoute>
+                <Transactions />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/notifications" element={
+              <ProtectedRoute>
+                <Notifications />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <Settings />
               </ProtectedRoute>
             } />
             
