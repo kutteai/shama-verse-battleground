@@ -4,6 +4,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import CommentModeration from "@/components/comments/CommentModeration";
 import CommentAnalytics from "@/components/comments/CommentAnalytics";
 import TimeframeToggle from "@/components/dashboard/TimeframeToggle";
+import { commentAnalyticsData } from "@/data/adminDashboardData";
 
 // Define Comment type
 interface Comment {
@@ -96,19 +97,6 @@ const CommentManagement = () => {
     }
   ];
 
-  // Mock data for analytics
-  const analyticsData = {
-    commentsByDay: [
-      { date: "2025-04-01", count: 124 },
-      { date: "2025-04-02", count: 145 },
-      { date: "2025-04-03", count: 132 },
-      { date: "2025-04-04", count: 167 },
-      { date: "2025-04-05", count: 189 },
-      { date: "2025-04-06", count: 176 },
-      { date: "2025-04-07", count: 154 }
-    ]
-  };
-
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -127,10 +115,10 @@ const CommentManagement = () => {
           />
           
           <CommentAnalytics 
-            data={analyticsData}
-            totalComments={4532}
-            avgCommentsPerContent={12.4}
-            commentEngagementRate={6.8}
+            data={commentAnalyticsData.data}
+            totalComments={commentAnalyticsData.totalComments}
+            avgCommentsPerContent={commentAnalyticsData.avgCommentsPerContent}
+            commentEngagementRate={commentAnalyticsData.commentEngagementRate}
           />
         </div>
       </div>
