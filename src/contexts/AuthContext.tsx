@@ -16,6 +16,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isAdmin: boolean; // Add isAdmin property to context
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
 }
@@ -24,6 +25,7 @@ const defaultContextValue: AuthContextType = {
   user: null,
   isAuthenticated: false,
   isLoading: true,
+  isAdmin: false, // Add default value for isAdmin
   login: async () => {},
   logout: () => {},
 };
@@ -90,6 +92,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     user,
     isAuthenticated: !!user,
     isLoading,
+    isAdmin: user?.isAdmin || false, // Add isAdmin derived from user
     login,
     logout,
   };

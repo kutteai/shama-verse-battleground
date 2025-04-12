@@ -113,7 +113,8 @@ const CommentManagement = () => {
             reportedComments={reportedComments} 
           />
           
-          <CommentAnalytics timeframe={timeframe} />
+          {/* Passing CommentAnalytics without the timeframe prop since it's not defined in its props */}
+          <CommentAnalytics />
         </div>
       </div>
     </DashboardLayout>
