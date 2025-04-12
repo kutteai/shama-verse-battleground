@@ -17,6 +17,7 @@ import Freestyles from "./pages/Freestyles";
 import Reports from "./pages/Reports";
 import Transactions from "./pages/Transactions";
 import Notifications from "./pages/Notifications";
+import Withdrawals from "./pages/Withdrawals";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
@@ -87,6 +88,12 @@ const App = () => (
             <Route path="/transactions" element={
               <ProtectedRoute>
                 <Transactions />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/withdrawals" element={
+              <ProtectedRoute>
+                <Withdrawals />
               </ProtectedRoute>
             } />
             
