@@ -1,65 +1,25 @@
+
 import { useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { 
-  Search, 
-  Filter, 
-  Download,
-  MoreHorizontal,
-  DollarSign, 
-  Calendar,
-  Gift,
-  PlusCircle,
-  MinusCircle,
-  Clock,
-  ArrowUpRight,
-  ArrowDownLeft,
-  CreditCard,
-  CheckCircle2,
-  XCircle,
-  AlertTriangle,
-  FileSpreadsheet,
-  CalendarDays,
-  RefreshCw,
-  User,
-  ChevronDown,
-  ChevronUp,
-  CircleDollarSign,
-  Tag,
-  AlertCircle,
-  Music
-} from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DateRangePicker } from "@/components/ui/date-range-picker";
-import { format } from "date-fns";
+import { Search, Download } from "lucide-react";
 import { DateRange } from "react-day-picker";
 
-import { toast } from "sonner";
+// Import components
+import { TransactionTable } from "@/components/transactions/TransactionTable";
+import { TransactionFilters } from "@/components/transactions/TransactionFilters";
+import { TransactionDetails } from "@/components/transactions/TransactionDetails";
+import { RevenueOverview } from "@/components/transactions/RevenueOverview";
+import { PayoutStatistics } from "@/components/transactions/PayoutStatistics";
+import { ProcessingStatus } from "@/components/transactions/ProcessingStatus";
+
+// Import types
+import { Transaction, RevenueData, PayoutStats } from "@/types/transactions";
 
 // Mock data for transactions
-const mockTransactions = [
+const mockTransactions: Transaction[] = [
   {
     id: "tx_123456",
     user: {
@@ -190,7 +150,7 @@ const mockTransactions = [
 ];
 
 // Mock data for revenue breakdown
-const mockRevenueData = {
+const mockRevenueData: RevenueData = {
   total: 24899.50,
   gift_purchases: 12450.75,
   challenge_entries: 5680.25,
@@ -200,7 +160,7 @@ const mockRevenueData = {
 };
 
 // Mock data for payout stats
-const mockPayoutStats = {
+const mockPayoutStats: PayoutStats = {
   total_paid: 18750.60,
   pending_payouts: 3540.25,
   average_payout: 285.75,
@@ -212,9 +172,8 @@ const mockPayoutStats = {
 const Transactions = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
-  const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [transactionDetailsOpen, setTransactionDetailsOpen] = useState(false);
-  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedType, setSelectedType] = useState("all");
   const [selectedDateRange, setSelectedDateRange] = useState<DateRange | undefined>({ 
@@ -288,72 +247,17 @@ const Transactions = () => {
     }
   });
 
-  // Helper functions
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return format(date, "MMM d, yyyy h:mm a");
-  };
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
-
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case "completed":
-        return <Badge className="bg-green-500">Completed</Badge>;
-      case "pending":
-        return <Badge className="bg-yellow-500">Pending</Badge>;
-      case "failed":
-        return <Badge className="bg-red-500">Failed</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
-
-  const getTypeIcon = (type) => {
-    switch (type) {
-      case "gift_purchase":
-        return <Gift className="h-5 w-5 text-purple-500" />;
-      case "challenge_entry":
-        return <PlusCircle className="h-5 w-5 text-blue-500" />;
-      case "payout":
-        return <MinusCircle className="h-5 w-5 text-red-500" />;
-      case "challenge_earnings":
-        return <PlusCircle className="h-5 w-5 text-green-500" />;
-      case "gift_received":
-        return <Gift className="h-5 w-5 text-green-500" />;
-      case "subscription":
-        return <Clock className="h-5 w-5 text-blue-500" />;
-      default:
-        return <DollarSign className="h-5 w-5 text-gray-500" />;
-    }
-  };
-
-  const getAmountWithDirection = (transaction) => {
-    const amount = formatCurrency(Math.abs(transaction.amount));
-    return transaction.amount >= 0 ? (
-      <div className="flex items-center">
-        <ArrowDownLeft size={16} className="mr-1 text-green-600" />
-        <span>{amount}</span>
-      </div>
-    ) : (
-      <div className="flex items-center">
-        <ArrowUpRight size={16} className="mr-1 text-red-600" />
-        <span>{amount}</span>
-      </div>
-    );
-  };
-
   const resetFilters = () => {
     setSelectedStatus("all");
     setSelectedType("all");
-    setSelectedDateRange({ from: null, to: null });
+    setSelectedDateRange({ from: undefined, to: undefined });
     setSelectedSort("newest");
     setSearchQuery("");
+  };
+  
+  const handleViewTransactionDetails = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setTransactionDetailsOpen(true);
   };
 
   return (
@@ -375,14 +279,17 @@ const Transactions = () => {
             </TabsList>
 
             <div className="flex items-center gap-2">
-              <Button 
-                onClick={() => setIsFiltersOpen(!isFiltersOpen)}
-                variant="outline" 
-                className="flex items-center gap-2"
-              >
-                <Filter size={16} />
-                Filters
-              </Button>
+              <TransactionFilters 
+                selectedStatus={selectedStatus}
+                selectedType={selectedType}
+                selectedDateRange={selectedDateRange}
+                selectedSort={selectedSort}
+                onStatusChange={setSelectedStatus}
+                onTypeChange={setSelectedType}
+                onDateRangeChange={setSelectedDateRange}
+                onSortChange={setSelectedSort}
+                onReset={resetFilters}
+              />
               <Button 
                 variant="outline"
                 className="flex items-center gap-2"
@@ -392,84 +299,6 @@ const Transactions = () => {
               </Button>
             </div>
           </div>
-
-          {isFiltersOpen && (
-            <Card className="mb-4">
-              <CardContent className="pt-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div>
-                    <label className="text-sm font-medium">Transaction Status</label>
-                    <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="Filter by status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Statuses</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="failed">Failed</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium">Transaction Type</label>
-                    <Select value={selectedType} onValueChange={setSelectedType}>
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="Filter by type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Types</SelectItem>
-                        <SelectItem value="gift_purchase">Gift Purchase</SelectItem>
-                        <SelectItem value="challenge_entry">Challenge Entry</SelectItem>
-                        <SelectItem value="payout">Payout</SelectItem>
-                        <SelectItem value="challenge_earnings">Challenge Earnings</SelectItem>
-                        <SelectItem value="gift_received">Gift Received</SelectItem>
-                        <SelectItem value="subscription">Subscription</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium">Date Range</label>
-                    <DateRangePicker 
-                      className="mt-1"
-                      value={selectedDateRange}
-                      onValueChange={(newValue: DateRange | undefined) => setSelectedDateRange(newValue)}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium">Sort By</label>
-                    <Select value={selectedSort} onValueChange={setSelectedSort}>
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="Sort by" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="newest">Newest First</SelectItem>
-                        <SelectItem value="oldest">Oldest First</SelectItem>
-                        <SelectItem value="amount_high">Amount (High to Low)</SelectItem>
-                        <SelectItem value="amount_low">Amount (Low to High)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="flex justify-end mt-4">
-                  <Button 
-                    variant="outline" 
-                    className="mr-2"
-                    onClick={resetFilters}
-                  >
-                    Reset Filters
-                  </Button>
-                  <Button onClick={() => setIsFiltersOpen(false)}>
-                    Apply Filters
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
 
           <div className="flex mb-4">
             <div className="relative flex-1">
@@ -484,376 +313,29 @@ const Transactions = () => {
           </div>
 
           <TabsContent value={activeTab} className="space-y-4">
-            <Card>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[180px]">Transaction</TableHead>
-                      <TableHead>User</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead className="text-right">Amount</TableHead>
-                      <TableHead className="text-right">Fee</TableHead>
-                      <TableHead className="text-right">Net</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead className="w-[70px]"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {sortedTransactions.length > 0 ? (
-                      sortedTransactions.map((transaction) => (
-                        <TableRow key={transaction.id} className="group">
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <div className="p-2 bg-muted rounded-full">
-                                {getTypeIcon(transaction.type)}
-                              </div>
-                              <div>
-                                <div className="font-medium">
-                                  {transaction.id}
-                                </div>
-                                <div className="text-xs text-muted-foreground capitalize">
-                                  {transaction.type.replace(/_/g, " ")}
-                                </div>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Avatar className="h-8 w-8">
-                                <AvatarImage src={transaction.user.avatar} />
-                                <AvatarFallback>{transaction.user.username.charAt(0)}</AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <div className="font-medium">
-                                  {transaction.user.username}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {transaction.user.id}
-                                </div>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="max-w-[200px] truncate" title={transaction.description}>
-                              {transaction.description}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {getAmountWithDirection(transaction)}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {formatCurrency(transaction.fee)}
-                          </TableCell>
-                          <TableCell className="text-right font-medium">
-                            {formatCurrency(transaction.net)}
-                          </TableCell>
-                          <TableCell>
-                            {getStatusBadge(transaction.status)}
-                          </TableCell>
-                          <TableCell>
-                            <div className="whitespace-nowrap">
-                              {formatDate(transaction.created_at)}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => {
-                                setSelectedTransaction(transaction);
-                                setTransactionDetailsOpen(true);
-                              }}
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={9} className="text-center py-10">
-                          <div className="flex flex-col items-center justify-center text-muted-foreground">
-                            <DollarSign size={36} className="mb-2" />
-                            <p>No transactions found</p>
-                            <p className="text-sm">Try adjusting your search or filters</p>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-              <CardFooter className="flex justify-between p-4 border-t">
-                <div className="text-sm text-muted-foreground">
-                  Showing {sortedTransactions.length} of {mockTransactions.length} transactions
-                </div>
-                <Button variant="outline" size="sm" disabled={sortedTransactions.length === 0}>
-                  <FileSpreadsheet className="h-4 w-4 mr-2" />
-                  Export Transactions
-                </Button>
-              </CardFooter>
-            </Card>
+            <TransactionTable 
+              transactions={sortedTransactions}
+              filteredCount={sortedTransactions.length}
+              totalCount={mockTransactions.length}
+              onViewDetails={handleViewTransactionDetails}
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <DollarSign className="h-5 w-5 mr-2 text-green-500" />
-                    Revenue Overview
-                  </CardTitle>
-                  <CardDescription>Current month revenue breakdown</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold mb-4">
-                    {formatCurrency(mockRevenueData.total)}
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center text-sm">
-                        <Gift className="h-4 w-4 mr-2 text-purple-500" />
-                        <span>Gift Purchases</span>
-                      </div>
-                      <div>
-                        {formatCurrency(mockRevenueData.gift_purchases)}
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center text-sm">
-                        <PlusCircle className="h-4 w-4 mr-2 text-blue-500" />
-                        <span>Challenge Entries</span>
-                      </div>
-                      <div>
-                        {formatCurrency(mockRevenueData.challenge_entries)}
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center text-sm">
-                        <Clock className="h-4 w-4 mr-2 text-blue-500" />
-                        <span>Subscriptions</span>
-                      </div>
-                      <div>
-                        {formatCurrency(mockRevenueData.subscriptions)}
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center text-sm">
-                        <DollarSign className="h-4 w-4 mr-2 text-gray-500" />
-                        <span>Other Revenue</span>
-                      </div>
-                      <div>
-                        {formatCurrency(mockRevenueData.other)}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter className="border-t pt-4 flex justify-between">
-                  <Select defaultValue={mockRevenueData.timeframe}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="current_month">Current Month</SelectItem>
-                      <SelectItem value="previous_month">Previous Month</SelectItem>
-                      <SelectItem value="year_to_date">Year to Date</SelectItem>
-                      <SelectItem value="last_30_days">Last 30 Days</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button variant="outline" size="sm" className="flex items-center gap-1">
-                    <RefreshCw className="h-4 w-4" />
-                    <span>Refresh</span>
-                  </Button>
-                </CardFooter>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <MinusCircle className="h-5 w-5 mr-2 text-red-500" />
-                    Payout Statistics
-                  </CardTitle>
-                  <CardDescription>Current month payout data</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    <div>
-                      <div className="text-sm text-muted-foreground mb-1">Total Paid Out</div>
-                      <div className="text-3xl font-bold">{formatCurrency(mockPayoutStats.total_paid)}</div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <div className="text-sm text-muted-foreground mb-1">Pending Payouts</div>
-                        <div className="text-xl font-bold">{formatCurrency(mockPayoutStats.pending_payouts)}</div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-muted-foreground mb-1">Average Payout</div>
-                        <div className="text-xl font-bold">{formatCurrency(mockPayoutStats.average_payout)}</div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-muted-foreground mb-1">Users Paid</div>
-                        <div className="text-xl font-bold">{mockPayoutStats.users_paid}</div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-muted-foreground mb-1">Next Scheduled</div>
-                        <div className="text-sm font-medium">{formatDate(mockPayoutStats.next_scheduled)}</div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter className="border-t pt-4 flex justify-between">
-                  <Select defaultValue={mockPayoutStats.timeframe}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="current_month">Current Month</SelectItem>
-                      <SelectItem value="previous_month">Previous Month</SelectItem>
-                      <SelectItem value="year_to_date">Year to Date</SelectItem>
-                      <SelectItem value="last_30_days">Last 30 Days</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button size="sm">Schedule Payouts</Button>
-                </CardFooter>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <CreditCard className="h-5 w-5 mr-2 text-blue-500" />
-                    Stripe Dashboard
-                  </CardTitle>
-                  <CardDescription>Payment processing status</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="bg-green-50 border border-green-200 rounded-md p-3 flex items-center">
-                      <CheckCircle2 className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
-                      <div>
-                        <div className="text-sm font-medium">Connected and Active</div>
-                        <div className="text-xs text-muted-foreground">Last synced: 5 minutes ago</div>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <div className="text-sm">Processing Success Rate</div>
-                        <div className="font-medium">98.2%</div>
-                      </div>
-                      
-                      <div className="flex justify-between items-center">
-                        <div className="text-sm">Failed Transactions (24h)</div>
-                        <div className="font-medium">3</div>
-                      </div>
-                      
-                      <div className="flex justify-between items-center">
-                        <div className="text-sm">Average Processing Time</div>
-                        <div className="font-medium">1.2s</div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter className="border-t pt-4 flex justify-center">
-                  <Button className="w-full" variant="outline">
-                    Open Stripe Dashboard
-                    <ArrowUpRight className="h-4 w-4 ml-2" />
-                  </Button>
-                </CardFooter>
-              </Card>
+              <RevenueOverview data={mockRevenueData} />
+              <PayoutStatistics data={mockPayoutStats} />
+              <ProcessingStatus />
             </div>
           </TabsContent>
         </Tabs>
       </div>
 
-      {/* Transaction Details Dialog */}
-      <Dialog open={transactionDetailsOpen} onOpenChange={setTransactionDetailsOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Transaction Details</DialogTitle>
-            <DialogDescription>
-              View complete transaction information
-            </DialogDescription>
-          </DialogHeader>
+      <TransactionDetails
+        transaction={selectedTransaction}
+        open={transactionDetailsOpen}
+        onOpenChange={setTransactionDetailsOpen}
+      />
+    </DashboardLayout>
+  );
+};
 
-          {selectedTransaction && (
-            <div className="space-y-4">
-              <div className="p-4 bg-muted rounded-md space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Transaction ID:</span>
-                  <span className="font-medium">{selectedTransaction.id}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Status:</span>
-                  {getStatusBadge(selectedTransaction.status)}
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Date:</span>
-                  <span>{formatDate(selectedTransaction.created_at)}</span>
-                </div>
-              </div>
-              
-              <div className="border-t border-b py-4 space-y-3">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10">
-                    <AvatarFallback>{selectedTransaction.user.username.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <div className="font-medium">{selectedTransaction.user.username}</div>
-                    <div className="text-sm text-muted-foreground">{selectedTransaction.user.id}</div>
-                  </div>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="ml-auto"
-                    onClick={() => {
-                      toast.info(`Viewing user ${selectedTransaction.user.username}`);
-                      setTransactionDetailsOpen(false);
-                    }}
-                  >
-                    <User className="h-4 w-4 mr-1" />
-                    View User
-                  </Button>
-                </div>
-                
-                <div className="space-y-1">
-                  <div className="text-sm text-muted-foreground">Transaction Type:</div>
-                  <div className="flex items-center">
-                    {getTypeIcon(selectedTransaction.type)}
-                    <span className="ml-2 capitalize">{selectedTransaction.type.replace(/_/g, " ")}</span>
-                  </div>
-                </div>
-                
-                <div className="space-y-1">
-                  <div className="text-sm text-muted-foreground">Description:</div>
-                  <div>{selectedTransaction.description}</div>
-                </div>
-                
-                {selectedTransaction.related_id && (
-                  <div className="space-y-1">
-                    <div className="text-sm text-muted-foreground">Related Item:</div>
-                    <div className="flex items-center">
-                      {selectedTransaction.related_id.startsWith("ch_") && <Tag size={14} className="mr-1" />}
-                      {selectedTransaction.related_id.startsWith("fs_") && <Music size={14} className="mr-1" />}
-                      {selectedTransaction.related_id.startsWith("gift_") && <Gift size={14} className="mr-1" />}
-                      {selectedTransaction.related_id.startsWith("sub_") && <Clock size={14} className="mr-1" />}
-                      {selectedTransaction.related_id.startsWith("po_") && <CreditCard size={14} className="mr-1" />}
-                      <span>{selectedTransaction.related_id}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-              
-              <div className="space-y-3">
-                <div className="text-sm font-medium mb-2">Financial Details</div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-sm text-muted-foreground">Total Amount:</div>
-                    <div className="text-lg font-bold">
-                      {formatCurrency(Math.abs
+export default Transactions;
