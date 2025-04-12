@@ -96,6 +96,19 @@ const CommentManagement = () => {
     }
   ];
 
+  // Mock data for analytics
+  const analyticsData = {
+    commentsByDay: [
+      { date: "2025-04-01", count: 124 },
+      { date: "2025-04-02", count: 145 },
+      { date: "2025-04-03", count: 132 },
+      { date: "2025-04-04", count: 167 },
+      { date: "2025-04-05", count: 189 },
+      { date: "2025-04-06", count: 176 },
+      { date: "2025-04-07", count: 154 }
+    ]
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -113,8 +126,12 @@ const CommentManagement = () => {
             reportedComments={reportedComments} 
           />
           
-          {/* Passing CommentAnalytics without the timeframe prop since it's not defined in its props */}
-          <CommentAnalytics />
+          <CommentAnalytics 
+            data={analyticsData}
+            totalComments={4532}
+            avgCommentsPerContent={12.4}
+            commentEngagementRate={6.8}
+          />
         </div>
       </div>
     </DashboardLayout>
