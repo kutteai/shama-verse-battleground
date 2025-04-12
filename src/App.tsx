@@ -21,6 +21,15 @@ import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
 
+// Admin Pages
+import MessagingManagement from "./pages/admin/MessagingManagement";
+import LikesManagement from "./pages/admin/LikesManagement";
+import FollowingManagement from "./pages/admin/FollowingManagement";
+import CreatorInsights from "./pages/admin/CreatorInsights";
+import UserBehavior from "./pages/admin/UserBehavior";
+import CommentManagement from "./pages/admin/CommentManagement";
+import SystemTools from "./pages/admin/SystemTools";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -90,6 +99,49 @@ const App = () => (
             <Route path="/settings" element={
               <ProtectedRoute>
                 <Settings />
+              </ProtectedRoute>
+            } />
+            
+            {/* Admin routes */}
+            <Route path="/admin/messaging" element={
+              <ProtectedRoute requireAdmin={true}>
+                <MessagingManagement />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/admin/likes" element={
+              <ProtectedRoute requireAdmin={true}>
+                <LikesManagement />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/admin/following" element={
+              <ProtectedRoute requireAdmin={true}>
+                <FollowingManagement />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/admin/creators" element={
+              <ProtectedRoute requireAdmin={true}>
+                <CreatorInsights />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/admin/user-behavior" element={
+              <ProtectedRoute requireAdmin={true}>
+                <UserBehavior />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/admin/comments" element={
+              <ProtectedRoute requireAdmin={true}>
+                <CommentManagement />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/admin/system" element={
+              <ProtectedRoute requireAdmin={true}>
+                <SystemTools />
               </ProtectedRoute>
             } />
             
