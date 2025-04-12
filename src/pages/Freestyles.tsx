@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -45,8 +46,8 @@ import {
   Share2,
   ShieldCheck,
   ShieldAlert,
-  ArrowUp, // Added for trending indicators
-  ChevronUp // Alternative trending indicator
+  ArrowUp,
+  ChevronUp
 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -821,4 +822,86 @@ const Freestyles = () => {
                       </div>
                       
                       <div className="flex flex-col gap-1 items-center justify-center p-3 border rounded-md">
-                        <Gift size={20
+                        <Gift size={20} className="text-muted-foreground mb-1" />
+                        <div className="text-2xl font-bold">{selectedFreestyle.gifts}</div>
+                        <div className="text-xs text-muted-foreground">Gifts</div>
+                      </div>
+                      
+                      <div className="flex flex-col gap-1 items-center justify-center p-3 border rounded-md">
+                        <ShieldCheck size={20} className="text-muted-foreground mb-1" />
+                        <div className="text-2xl font-bold">{Math.round((1-selectedFreestyle.nsfw_score) * 100)}%</div>
+                        <div className="text-xs text-muted-foreground">Content Safety</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader className="py-3">
+                    <CardTitle className="text-base">Performance Stats</CardTitle>
+                  </CardHeader>
+                  <CardContent className="py-0">
+                    <div className="space-y-4">
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>Watch Time</span>
+                          <span>78%</span>
+                        </div>
+                        <Progress value={78} className="h-1.5" />
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Average viewer watches 78% of the freestyle
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>Engagement Rate</span>
+                          <span>8.4%</span>
+                        </div>
+                        <Progress value={8.4} className="h-1.5" />
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Based on interactions per view
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>Share Rate</span>
+                          <span>2.1%</span>
+                        </div>
+                        <Progress value={2.1} className="h-1.5" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader className="py-3">
+                    <CardTitle className="text-base">Administrative Actions</CardTitle>
+                  </CardHeader>
+                  <CardContent className="py-0 space-y-3">
+                    <Button variant="outline" className="w-full flex items-center gap-2 justify-start">
+                      <BarChart3 size={16} />
+                      <span>Full Analytics Report</span>
+                    </Button>
+                    
+                    <Button variant="outline" className="w-full flex items-center gap-2 justify-start">
+                      <MessageSquare size={16} />
+                      <span>View Comments ({selectedFreestyle.comments})</span>
+                    </Button>
+                    
+                    <Button variant="destructive" className="w-full">
+                      Delete Freestyle
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </DashboardLayout>
+  );
+};
+
+export default Freestyles;
