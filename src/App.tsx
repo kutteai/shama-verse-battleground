@@ -1,9 +1,8 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -39,123 +38,121 @@ const App = () => (
       <AuthProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <Routes>
-            {/* Redirect root to login */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            
-            {/* Auth routes */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/unauthorized" element={<Unauthorized />} />
-            
-            {/* Protected routes */}
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/users" element={
-              <ProtectedRoute>
-                <Users />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/gifts" element={
-              <ProtectedRoute>
-                <Gifts />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/challenges" element={
-              <ProtectedRoute>
-                <Challenges />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/freestyles" element={
-              <ProtectedRoute>
-                <Freestyles />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/reports" element={
-              <ProtectedRoute>
-                <Reports />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/transactions" element={
-              <ProtectedRoute>
-                <Transactions />
-              </ProtectedRoute>
-            } />
+        <Routes>
+          {/* Redirect root to login */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          
+          {/* Auth routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/unauthorized" element={<Unauthorized />} />
+          
+          {/* Protected routes */}
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/users" element={
+            <ProtectedRoute>
+              <Users />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/gifts" element={
+            <ProtectedRoute>
+              <Gifts />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/challenges" element={
+            <ProtectedRoute>
+              <Challenges />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/freestyles" element={
+            <ProtectedRoute>
+              <Freestyles />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/reports" element={
+            <ProtectedRoute>
+              <Reports />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/transactions" element={
+            <ProtectedRoute>
+              <Transactions />
+            </ProtectedRoute>
+          } />
 
-            <Route path="/withdrawals" element={
-              <ProtectedRoute>
-                <Withdrawals />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/notifications" element={
-              <ProtectedRoute>
-                <Notifications />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/settings" element={
-              <ProtectedRoute>
-                <Settings />
-              </ProtectedRoute>
-            } />
-            
-            {/* Admin routes */}
-            <Route path="/admin/messaging" element={
-              <ProtectedRoute requireAdmin={true}>
-                <MessagingManagement />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/admin/likes" element={
-              <ProtectedRoute requireAdmin={true}>
-                <LikesManagement />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/admin/following" element={
-              <ProtectedRoute requireAdmin={true}>
-                <FollowingManagement />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/admin/creators" element={
-              <ProtectedRoute requireAdmin={true}>
-                <CreatorInsights />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/admin/user-behavior" element={
-              <ProtectedRoute requireAdmin={true}>
-                <UserBehavior />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/admin/comments" element={
-              <ProtectedRoute requireAdmin={true}>
-                <CommentManagement />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/admin/system" element={
-              <ProtectedRoute requireAdmin={true}>
-                <SystemTools />
-              </ProtectedRoute>
-            } />
-            
-            {/* 404 route */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+          <Route path="/withdrawals" element={
+            <ProtectedRoute>
+              <Withdrawals />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/notifications" element={
+            <ProtectedRoute>
+              <Notifications />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/settings" element={
+            <ProtectedRoute>
+              <Settings />
+            </ProtectedRoute>
+          } />
+          
+          {/* Admin routes */}
+          <Route path="/admin/messaging" element={
+            <ProtectedRoute requireAdmin={true}>
+              <MessagingManagement />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/admin/likes" element={
+            <ProtectedRoute requireAdmin={true}>
+              <LikesManagement />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/admin/following" element={
+            <ProtectedRoute requireAdmin={true}>
+              <FollowingManagement />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/admin/creators" element={
+            <ProtectedRoute requireAdmin={true}>
+              <CreatorInsights />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/admin/user-behavior" element={
+            <ProtectedRoute requireAdmin={true}>
+              <UserBehavior />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/admin/comments" element={
+            <ProtectedRoute requireAdmin={true}>
+              <CommentManagement />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/admin/system" element={
+            <ProtectedRoute requireAdmin={true}>
+              <SystemTools />
+            </ProtectedRoute>
+          } />
+          
+          {/* 404 route */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
