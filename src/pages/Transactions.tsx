@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -858,3 +859,65 @@ const Transactions = () => {
                   <div>
                     <div className="text-sm text-muted-foreground">Platform Fee:</div>
                     <div className="text-lg">
+                      {formatCurrency(selectedTransaction.fee)}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-muted-foreground">Net Amount:</div>
+                    <div className="text-lg font-bold">
+                      {formatCurrency(Math.abs(selectedTransaction.net))}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-muted-foreground">Payment Method:</div>
+                    <div className="flex items-center">
+                      {selectedTransaction.payment_method ? (
+                        <>
+                          <CreditCard size={14} className="mr-1" />
+                          <span className="capitalize">{selectedTransaction.payment_method}</span>
+                          {selectedTransaction.payment_details && (
+                            <span className="ml-1 text-muted-foreground">
+                              ({selectedTransaction.payment_details})
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-muted-foreground">N/A</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                {selectedTransaction.error_message && (
+                  <div className="bg-red-50 border border-red-200 rounded-md p-3 flex items-center mt-3">
+                    <AlertCircle className="h-5 w-5 text-red-500 mr-2 flex-shrink-0" />
+                    <div>
+                      <div className="text-sm font-medium">Transaction Failed</div>
+                      <div className="text-xs text-red-600">{selectedTransaction.error_message}</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <div className="pt-4 border-t flex justify-between">
+                <Button variant="outline">
+                  <FileSpreadsheet className="h-4 w-4 mr-2" />
+                  Export Receipt
+                </Button>
+                
+                {selectedTransaction.status === "failed" && (
+                  <Button>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Retry Transaction
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </DashboardLayout>
+  );
+};
+
+export default Transactions;
