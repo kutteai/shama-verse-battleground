@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { Mic, Crown, Award, Fire, Star, Heart, Gem, Plus, Trash2, Edit, Search } from "lucide-react";
+import { Mic, Crown, Award, Flame, Star, Heart, Gem, Plus, Trash2, Edit, Search } from "lucide-react";
 import { toast } from "sonner";
 
 // Mock gift data
@@ -39,7 +39,7 @@ const mockGifts = [
   { 
     id: 4, 
     name: "Fire", 
-    icon: <Fire className="h-8 w-8 text-red-500" />, 
+    icon: <Flame className="h-8 w-8 text-red-500" />, 
     value: 20, 
     description: "Let them know their freestyle is fire!", 
     popularity: 95
