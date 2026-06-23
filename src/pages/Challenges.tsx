@@ -1,243 +1,176 @@
 
 import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
-// Import challenges components
-import ChallengeTable, { Challenge } from "@/components/challenges/ChallengeTable";
+import ChallengeTable from "@/components/challenges/ChallengeTable";
 import ChallengeFilters from "@/components/challenges/ChallengeFilters";
 import ChallengeStats from "@/components/challenges/ChallengeStats";
 import ChallengeDialogs from "@/components/challenges/ChallengeDialogs";
 
-// Import mock data
-import { mockChallenges } from "@/data/challengeData";
+import {
+  getChallenges,
+  pauseChallenge,
+  resumeChallenge,
+  banChallenge,
+  deleteChallenge,
+  type AdminChallenge,
+} from "@/lib/challengesAdminApi";
+import { queryKeys } from "@/lib/queryKeys";
+
+type DialogAction = "pause" | "ban" | "delete" | null;
 
 const Challenges = () => {
-  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedType, setSelectedType] = useState("all");
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedStatus, setSelectedStatus] = useState("all");
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+  const [selectedType, setSelectedType] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("");
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-  
-  // Dialog states
-  const [isPauseDialogOpen, setPauseDialogOpen] = useState(false);
-  const [isBanDialogOpen, setBanDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(null);
+  const [page] = useState(1);
 
-  // Action handlers
-  const handleViewDetails = (challenge: Challenge) => {
-    toast({
-      title: "View Challenge Details",
-      description: `Viewing details for ${challenge.title}`,
-    });
-    // In a real app, you would navigate to a details page
-    // navigate(`/challenges/${challenge.id}`);
+  const [dialogAction, setDialogAction] = useState<DialogAction>(null);
+  const [selectedChallenge, setSelectedChallenge] = useState<AdminChallenge | null>(null);
+
+  const queryClient = useQueryClient();
+
+  // Tab → status mapping: "running" tab maps to status 5
+  const tabStatusMap: Record<string, string> = {
+    running: "5",
+    pending: "1",
+    completed: "6",
+    banned: "",
   };
+  const effectiveStatus = activeTab !== "all" ? (tabStatusMap[activeTab] ?? "") : selectedStatus;
+  const isBannedTab = activeTab === "banned";
 
-  const handleViewVotingAnalytics = (challenge: Challenge) => {
-    toast({
-      title: "Voting Analytics",
-      description: `Viewing voting analytics for ${challenge.title}`,
-    });
-    // In a real app, you would navigate to analytics page or show a modal
-    // navigate(`/challenges/${challenge.id}/analytics`);
-  };
+  const challengesQuery = useQuery({
+    queryKey: queryKeys.challenges(selectedStatus, selectedType, search, page),
+    queryFn: () =>
+      getChallenges({
+        status: effectiveStatus ? Number(effectiveStatus) : undefined,
+        challenge_type: selectedType ? Number(selectedType) : undefined,
+        search: search || undefined,
+        page,
+      }),
+  });
 
-  const handleViewGiftDonations = (challenge: Challenge) => {
-    toast({
-      title: "Gift Donations",
-      description: `Viewing gift donations for ${challenge.title} (${challenge.giftTotal} total)`,
-    });
-    // In a real app, you would navigate to donations page or show a modal
-    // navigate(`/challenges/${challenge.id}/donations`);
-  };
+  const allData = challengesQuery.data;
+  const allResults = allData?.results ?? [];
+  const challenges = isBannedTab
+    ? allResults.filter((c) => c.is_banned_by_admin)
+    : activeTab !== "all"
+    ? allResults.filter((c) => c.status_display.toLowerCase() === activeTab || c.status === Number(effectiveStatus))
+    : allResults;
 
-  const openPauseDialog = (challenge: Challenge) => {
-    setSelectedChallenge(challenge);
-    setPauseDialogOpen(true);
-  };
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: queryKeys.challenges(selectedStatus, selectedType, search, page) });
 
-  const handlePauseChallenge = () => {
-    if (!selectedChallenge) return;
-    
-    // In a real app, you would call an API to pause the challenge
-    toast({
-      title: "Challenge Paused",
-      description: `${selectedChallenge.title} has been paused`,
-    });
-    
-    // Update challenge status in UI
-    const updatedChallenges = mockChallenges.map(challenge => 
-      challenge.id === selectedChallenge.id 
-        ? { ...challenge, status: "pending" }
-        : challenge
-    );
-    
-    // Close dialog
-    setPauseDialogOpen(false);
-  };
+  const pauseMutation = useMutation({
+    mutationFn: () => pauseChallenge(selectedChallenge!.id),
+    onSuccess: () => { toast.success("Challenge paused"); invalidate(); setDialogAction(null); },
+    onError: (err: Error) => toast.error(err.message),
+  });
 
-  const openBanDialog = (challenge: Challenge) => {
-    setSelectedChallenge(challenge);
-    setBanDialogOpen(true);
-  };
+  const resumeMutation = useMutation({
+    mutationFn: (id: string) => resumeChallenge(id),
+    onSuccess: () => { toast.success("Challenge resumed"); invalidate(); },
+    onError: (err: Error) => toast.error(err.message),
+  });
 
-  const handleBanChallenge = () => {
-    if (!selectedChallenge) return;
-    
-    // In a real app, you would call an API to ban the challenge
-    toast({
-      title: "Challenge Banned",
-      description: `${selectedChallenge.title} has been banned`,
-      variant: "destructive"
-    });
-    
-    // Update challenge status in UI
-    const updatedChallenges = mockChallenges.map(challenge => 
-      challenge.id === selectedChallenge.id 
-        ? { ...challenge, status: "flagged" }
-        : challenge
-    );
-    
-    // Close dialog
-    setBanDialogOpen(false);
-  };
+  const banMutation = useMutation({
+    mutationFn: () => banChallenge(selectedChallenge!.id),
+    onSuccess: () => { toast.success("Challenge banned"); invalidate(); setDialogAction(null); },
+    onError: (err: Error) => toast.error(err.message),
+  });
 
-  const openDeleteDialog = (challenge: Challenge) => {
-    setSelectedChallenge(challenge);
-    setDeleteDialogOpen(true);
-  };
-
-  const handleDeleteChallenge = () => {
-    if (!selectedChallenge) return;
-    
-    // In a real app, you would call an API to delete the challenge
-    toast({
-      title: "Challenge Deleted",
-      description: `${selectedChallenge.title} has been deleted`,
-      variant: "destructive"
-    });
-    
-    // Close dialog
-    setDeleteDialogOpen(false);
-  };
-
-  // Filter challenges based on all filters
-  const filteredChallenges = mockChallenges.filter((challenge) => {
-    // Tab filter
-    if (
-      activeTab === "ongoing" && challenge.status !== "ongoing" ||
-      activeTab === "pending" && challenge.status !== "pending" ||
-      activeTab === "completed" && challenge.status !== "completed" ||
-      activeTab === "flagged" && challenge.status !== "flagged"
-    ) {
-      return false;
-    }
-
-    // Search filter
-    if (
-      searchQuery &&
-      !challenge.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
-      !challenge.creator.username.toLowerCase().includes(searchQuery.toLowerCase()) &&
-      !challenge.challenger.username.toLowerCase().includes(searchQuery.toLowerCase())
-    ) {
-      return false;
-    }
-
-    // Type filter
-    if (selectedType !== "all" && challenge.type !== selectedType) {
-      return false;
-    }
-
-    // Category filter
-    if (selectedCategory !== "all" && challenge.category !== selectedCategory) {
-      return false;
-    }
-
-    // Status filter
-    if (selectedStatus !== "all" && challenge.status !== selectedStatus) {
-      return false;
-    }
-
-    return true;
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteChallenge(selectedChallenge!.id),
+    onSuccess: () => { toast.success("Challenge deleted"); invalidate(); setDialogAction(null); },
+    onError: (err: Error) => toast.error(err.message),
   });
 
   const resetFilters = () => {
-    setSelectedType("all");
-    setSelectedCategory("all");
-    setSelectedStatus("all");
-    setSearchQuery("");
+    setSelectedType("");
+    setSelectedStatus("");
+    setSearchInput("");
+    setSearch("");
   };
+
+  const isPending =
+    pauseMutation.isPending || banMutation.isPending || deleteMutation.isPending;
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Challenges Management</h1>
-          <p className="text-muted-foreground">Create and manage user challenges.</p>
+          <p className="text-muted-foreground">Review and moderate user challenges.</p>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <div className="flex justify-between items-center">
             <TabsList>
               <TabsTrigger value="all">All Challenges</TabsTrigger>
-              <TabsTrigger value="ongoing">Ongoing</TabsTrigger>
+              <TabsTrigger value="running">Running</TabsTrigger>
               <TabsTrigger value="pending">Pending</TabsTrigger>
               <TabsTrigger value="completed">Completed</TabsTrigger>
-              <TabsTrigger value="flagged">Flagged</TabsTrigger>
+              <TabsTrigger value="banned">Banned</TabsTrigger>
             </TabsList>
           </div>
 
-          <ChallengeFilters 
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
+          <ChallengeFilters
+            searchQuery={searchInput}
+            setSearchQuery={setSearchInput}
             selectedType={selectedType}
             setSelectedType={setSelectedType}
-            selectedCategory={selectedCategory}
-            setSelectedCategory={setSelectedCategory}
             selectedStatus={selectedStatus}
             setSelectedStatus={setSelectedStatus}
             isFiltersOpen={isFiltersOpen}
             setIsFiltersOpen={setIsFiltersOpen}
             resetFilters={resetFilters}
+            onSearch={() => setSearch(searchInput)}
           />
 
           <TabsContent value={activeTab} className="space-y-4">
             <Card>
               <CardContent className="p-0">
-                <ChallengeTable 
-                  challenges={filteredChallenges}
-                  onViewDetails={handleViewDetails}
-                  onViewVotingAnalytics={handleViewVotingAnalytics}
-                  onViewGiftDonations={handleViewGiftDonations}
-                  onPauseChallenge={openPauseDialog}
-                  onBanChallenge={openBanDialog}
-                  onDeleteChallenge={openDeleteDialog}
-                />
+                {challengesQuery.isLoading ? (
+                  <div className="h-40 flex items-center justify-center text-muted-foreground">Loading...</div>
+                ) : challengesQuery.isError ? (
+                  <div className="p-4 text-sm text-destructive">Failed to load challenges.</div>
+                ) : (
+                  <ChallengeTable
+                    challenges={challenges}
+                    onPauseChallenge={(ch) => { setSelectedChallenge(ch); setDialogAction("pause"); }}
+                    onResumeChallenge={(ch) => resumeMutation.mutate(ch.id)}
+                    onBanChallenge={(ch) => { setSelectedChallenge(ch); setDialogAction("ban"); }}
+                    onDeleteChallenge={(ch) => { setSelectedChallenge(ch); setDialogAction("delete"); }}
+                  />
+                )}
               </CardContent>
             </Card>
 
-            <ChallengeStats challenges={mockChallenges} />
+            <ChallengeStats challenges={allResults} totalCount={allData?.count ?? 0} />
           </TabsContent>
         </Tabs>
       </div>
 
-      <ChallengeDialogs 
-        isPauseDialogOpen={isPauseDialogOpen}
-        setPauseDialogOpen={setPauseDialogOpen}
-        isBanDialogOpen={isBanDialogOpen}
-        setBanDialogOpen={setBanDialogOpen}
-        isDeleteDialogOpen={isDeleteDialogOpen}
-        setDeleteDialogOpen={setDeleteDialogOpen}
+      <ChallengeDialogs
+        isPauseDialogOpen={dialogAction === "pause"}
+        setPauseDialogOpen={(open) => !open && setDialogAction(null)}
+        isBanDialogOpen={dialogAction === "ban"}
+        setBanDialogOpen={(open) => !open && setDialogAction(null)}
+        isDeleteDialogOpen={dialogAction === "delete"}
+        setDeleteDialogOpen={(open) => !open && setDialogAction(null)}
         selectedChallenge={selectedChallenge}
-        onPauseChallenge={handlePauseChallenge}
-        onBanChallenge={handleBanChallenge}
-        onDeleteChallenge={handleDeleteChallenge}
+        onPauseChallenge={() => pauseMutation.mutate()}
+        onBanChallenge={() => banMutation.mutate()}
+        onDeleteChallenge={() => deleteMutation.mutate()}
+        isPending={isPending}
       />
     </DashboardLayout>
   );

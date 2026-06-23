@@ -1,249 +1,113 @@
 
 import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import CreatorPerformance from "@/components/creators/CreatorPerformance";
-import { creatorPerformanceData } from "@/data/adminDashboardData";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import {
-  Search,
-  BarChart3,
-  TrendingUp,
-  Users,
-  Award,
-  Gift,
-  DollarSign,
-  CheckCircle2,
-  Clock,
-  Filter,
-  CalendarDays,
-  Crown,
-  Star,
-  ShieldCheck,
-  ArrowUpRight,
-  ArrowDownRight
-} from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Search, ShieldCheck, Users, Heart, Award, ChevronLeft, ChevronRight, Mail, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
 
-// Mock top creators data
-const topCreators = [
-  {
-    id: "creator_1",
-    name: "Alex Johnson",
-    username: "MicDropKing",
-    avatar: "https://i.pravatar.cc/150?img=12",
-    earnings: 12450,
-    followers: 15420,
-    engagement: 8.7,
-    growth: 12,
-    verified: true,
-    badges: ["OG", "Rising Star"]
-  },
-  {
-    id: "creator_2",
-    name: "Jamie Smith",
-    username: "FlowMaster",
-    avatar: "https://i.pravatar.cc/150?img=11",
-    earnings: 10280,
-    followers: 12890,
-    engagement: 9.2,
-    growth: 8,
-    verified: true,
-    badges: ["Top Earner"]
-  },
-  {
-    id: "creator_3",
-    name: "Taylor Richards",
-    username: "BeatSlayer",
-    avatar: "https://i.pravatar.cc/150?img=10",
-    earnings: 8945,
-    followers: 11250,
-    engagement: 7.6,
-    growth: 15,
-    verified: false,
-    badges: ["Rising Star"]
-  },
-  {
-    id: "creator_4",
-    name: "Jordan Lee",
-    username: "RhymeQueen",
-    avatar: "https://i.pravatar.cc/150?img=9",
-    earnings: 7650,
-    followers: 10780,
-    engagement: 8.9,
-    growth: -2,
-    verified: true,
-    badges: []
-  },
-  {
-    id: "creator_5",
-    name: "Casey Morgan",
-    username: "LyricLegend",
-    avatar: "https://i.pravatar.cc/150?img=8",
-    earnings: 6430,
-    followers: 7840,
-    engagement: 7.2,
-    growth: 5,
-    verified: false,
-    badges: []
-  }
+import { getCreatorInsights, toggleUserVerified, type AdminCreator, type CreatorSortBy } from "@/lib/creatorInsightsApi";
+import { queryKeys } from "@/lib/queryKeys";
+
+const SORT_OPTIONS: { value: CreatorSortBy; label: string }[] = [
+  { value: "followers_count", label: "Most Followers" },
+  { value: "likes_count", label: "Most Likes" },
+  { value: "challenges_count", label: "Most Challenges" },
+  { value: "date_joined", label: "Newest" },
 ];
 
-// Mock creator content data
-const creatorContent = [
-  {
-    id: "content_1",
-    title: "Summer Beat Battle",
-    type: "challenge",
-    views: 24680,
-    likes: 1850,
-    gifts: 125,
-    comments: 456,
-    uploadDate: "2025-04-05T14:30:00Z"
-  },
-  {
-    id: "content_2",
-    title: "90s Hip-Hop Tribute",
-    type: "freestyle",
-    views: 15720,
-    likes: 1240,
-    gifts: 86,
-    comments: 312,
-    uploadDate: "2025-04-02T10:45:00Z"
-  },
-  {
-    id: "content_3",
-    title: "Lyrical Showcase",
-    type: "challenge",
-    views: 12450,
-    likes: 980,
-    gifts: 72,
-    comments: 245,
-    uploadDate: "2025-03-28T16:20:00Z"
-  },
-  {
-    id: "content_4",
-    title: "Freestyle Friday Vol. 3",
-    type: "freestyle",
-    views: 9840,
-    likes: 720,
-    gifts: 58,
-    comments: 186,
-    uploadDate: "2025-03-25T12:10:00Z"
-  }
-];
+const formatDate = (iso: string) =>
+  new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(new Date(iso));
 
 const CreatorInsights = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCreator, setSelectedCreator] = useState<any>(null);
-  const [creatorDetailsOpen, setCreatorDetailsOpen] = useState(false);
-  const [sortBy, setSortBy] = useState("earnings");
-  const [timeframe, setTimeframe] = useState("month");
-  const [verificationDialogOpen, setVerificationDialogOpen] = useState(false);
-  
-  // Filter creators based on search query
-  const filteredCreators = topCreators.filter(creator => 
-    creator.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    creator.username.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  
-  // Sort creators based on selected criteria
-  const sortedCreators = [...filteredCreators].sort((a, b) => {
-    switch (sortBy) {
-      case "earnings":
-        return b.earnings - a.earnings;
-      case "followers":
-        return b.followers - a.followers;
-      case "engagement":
-        return b.engagement - a.engagement;
-      case "growth":
-        return b.growth - a.growth;
-      default:
-        return 0;
-    }
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<CreatorSortBy>("followers_count");
+  const [page, setPage] = useState(1);
+  const [selectedCreator, setSelectedCreator] = useState<AdminCreator | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+
+  const queryClient = useQueryClient();
+
+  const insightsQuery = useQuery({
+    queryKey: queryKeys.creatorInsights(search, sortBy, page),
+    queryFn: () => getCreatorInsights({ search: search || undefined, sort_by: sortBy, page }),
   });
-  
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric"
-    });
+
+  const verifyMutation = useMutation({
+    mutationFn: (userId: number) => toggleUserVerified(userId),
+    onSuccess: (data, userId) => {
+      toast.success(data.is_verified ? "Creator verified" : "Verification removed");
+      queryClient.invalidateQueries({ queryKey: ["creator-insights"] });
+      // Update selected creator dialog state immediately
+      if (selectedCreator?.id === userId) {
+        setSelectedCreator((prev) => prev ? { ...prev, is_verified: data.is_verified } : null);
+      }
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Failed to update verification");
+    },
+  });
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPage(1);
+    setSearch(searchInput);
   };
 
-  const handleViewCreatorDetails = (creator: any) => {
-    setSelectedCreator(creator);
-    setCreatorDetailsOpen(true);
-  };
-  
-  const handleVerifyCreator = (creator: any) => {
-    setSelectedCreator(creator);
-    setVerificationDialogOpen(true);
-  };
-
-  const confirmVerification = () => {
-    toast.success(`${selectedCreator.username} has been verified`);
-    setVerificationDialogOpen(false);
-  };
+  const results = insightsQuery.data?.results ?? [];
+  const totalVerified = results.filter((c) => c.is_verified).length;
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Creator Insights</h1>
-          <p className="text-muted-foreground">Track creator performance, earnings, and engagement</p>
+          <p className="text-muted-foreground">Track creator performance and manage verification status</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Total Creators</CardTitle>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Users className="h-4 w-4 text-blue-500" />
+                Total Creators (this page)
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">256</div>
-              <div className="flex items-center text-sm text-green-500">
-                <ArrowUpRight className="mr-1 h-4 w-4" />
-                12% increase this month
-              </div>
+              <div className="text-3xl font-bold">{(insightsQuery.data?.count ?? 0).toLocaleString()}</div>
             </CardContent>
           </Card>
-          
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Average Earnings</CardTitle>
+              <CardTitle className="text-base flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-blue-500" />
+                Verified (this page)
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">$856</div>
-              <div className="flex items-center text-sm text-green-500">
-                <ArrowUpRight className="mr-1 h-4 w-4" />
-                8.5% increase this month
-              </div>
+              <div className="text-3xl font-bold">{totalVerified}</div>
             </CardContent>
           </Card>
-          
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Verified Creators</CardTitle>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Heart className="h-4 w-4 text-red-500" />
+                Total Likes (this page)
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">42</div>
-              <div className="flex items-center text-sm text-muted-foreground">
-                16.4% of total creators
+              <div className="text-3xl font-bold">
+                {results.reduce((s, c) => s + c.likes_count, 0).toLocaleString()}
               </div>
             </CardContent>
           </Card>
@@ -254,354 +118,197 @@ const CreatorInsights = () => {
             <TabsTrigger value="top-creators">Top Creators</TabsTrigger>
             <TabsTrigger value="creator-detail">Creator Detail</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="top-creators" className="space-y-4">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle>Top Performing Creators</CardTitle>
-                <CardDescription>By earnings, engagement, and growth</CardDescription>
+                <CardTitle>Creator Directory</CardTitle>
+                <CardDescription>All active non-admin users, sorted by selected metric</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col sm:flex-row gap-4 mb-4">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
-                    <Input 
-                      placeholder="Search creators..." 
-                      className="pl-10" 
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                  <form onSubmit={handleSearchSubmit} className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+                    <Input
+                      placeholder="Search by username or email..."
+                      className="pl-9"
+                      value={searchInput}
+                      onChange={(e) => setSearchInput(e.target.value)}
                     />
-                  </div>
-                  <div className="flex gap-4">
-                    <div>
-                      <Select value={sortBy} onValueChange={setSortBy}>
-                        <SelectTrigger className="w-[160px]">
-                          <div className="flex items-center gap-2">
-                            <Filter size={16} />
-                            <SelectValue placeholder="Sort by" />
-                          </div>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="earnings">Earnings</SelectItem>
-                          <SelectItem value="followers">Followers</SelectItem>
-                          <SelectItem value="engagement">Engagement</SelectItem>
-                          <SelectItem value="growth">Growth</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Select value={timeframe} onValueChange={setTimeframe}>
-                        <SelectTrigger className="w-[160px]">
-                          <div className="flex items-center gap-2">
-                            <CalendarDays size={16} />
-                            <SelectValue placeholder="Timeframe" />
-                          </div>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="week">This Week</SelectItem>
-                          <SelectItem value="month">This Month</SelectItem>
-                          <SelectItem value="quarter">This Quarter</SelectItem>
-                          <SelectItem value="year">This Year</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
+                  </form>
+                  <Select value={sortBy} onValueChange={(v) => { setSortBy(v as CreatorSortBy); setPage(1); }}>
+                    <SelectTrigger className="w-full sm:w-[200px]">
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SORT_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Creator</TableHead>
-                      <TableHead>Earnings</TableHead>
-                      <TableHead className="hidden md:table-cell">Followers</TableHead>
-                      <TableHead className="hidden md:table-cell">Engagement</TableHead>
-                      <TableHead className="hidden sm:table-cell">Growth</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {sortedCreators.map((creator) => (
-                      <TableRow key={creator.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <div className="relative">
-                              <Avatar className="h-10 w-10">
-                                <AvatarImage src={creator.avatar} alt={creator.name} />
-                                <AvatarFallback>{creator.name.charAt(0)}</AvatarFallback>
-                              </Avatar>
-                              {creator.verified && (
-                                <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full w-4 h-4 flex items-center justify-center text-white">
-                                  <CheckCircle2 className="h-3 w-3" />
-                                </div>
-                              )}
-                            </div>
-                            <div>
-                              <div className="font-medium">{creator.name}</div>
-                              <div className="text-sm text-muted-foreground">@{creator.username}</div>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          ${creator.earnings.toLocaleString()}
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          {creator.followers.toLocaleString()}
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <div className="flex items-center">
-                            <span className="mr-2">{creator.engagement}%</span>
-                            <Progress value={creator.engagement * 10} className="h-1 w-16" />
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden sm:table-cell">
-                          <div className={`flex items-center ${creator.growth >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                            {creator.growth >= 0 ? (
-                              <ArrowUpRight className="mr-1 h-4 w-4" />
-                            ) : (
-                              <ArrowDownRight className="mr-1 h-4 w-4" />
-                            )}
-                            <span>{Math.abs(creator.growth)}%</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            {!creator.verified && (
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="text-blue-500"
-                                onClick={() => handleVerifyCreator(creator)}
-                              >
-                                <ShieldCheck className="h-4 w-4 mr-1" />
-                                <span>Verify</span>
-                              </Button>
-                            )}
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleViewCreatorDetails(creator)}
-                            >
-                              View
-                            </Button>
-                          </div>
-                        </TableCell>
+
+                {insightsQuery.isLoading ? (
+                  <div className="h-40 flex items-center justify-center text-muted-foreground">Loading...</div>
+                ) : insightsQuery.isError ? (
+                  <p className="text-sm text-destructive">Failed to load creators.</p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Creator</TableHead>
+                        <TableHead className="hidden md:table-cell">Followers</TableHead>
+                        <TableHead className="hidden md:table-cell">Challenges</TableHead>
+                        <TableHead className="hidden sm:table-cell">Likes</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-                {filteredCreators.length === 0 && (
-                  <div className="py-6 text-center text-muted-foreground">
-                    No creators found matching your search criteria.
-                  </div>
+                    </TableHeader>
+                    <TableBody>
+                      {results.map((creator) => (
+                        <TableRow key={creator.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <div className="relative">
+                                <Avatar className="h-9 w-9">
+                                  <AvatarImage src={creator.profile_pic ?? undefined} />
+                                  <AvatarFallback>{creator.username.charAt(0).toUpperCase()}</AvatarFallback>
+                                </Avatar>
+                                {creator.is_verified && (
+                                  <div className="absolute -bottom-0.5 -right-0.5 bg-blue-500 rounded-full w-3.5 h-3.5 flex items-center justify-center">
+                                    <ShieldCheck className="h-2.5 w-2.5 text-white" />
+                                  </div>
+                                )}
+                              </div>
+                              <div>
+                                <div className="font-medium">@{creator.username}</div>
+                                <div className="text-xs text-muted-foreground">{creator.email}</div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell">{creator.followers_count.toLocaleString()}</TableCell>
+                          <TableCell className="hidden md:table-cell">{creator.challenges_count.toLocaleString()}</TableCell>
+                          <TableCell className="hidden sm:table-cell">{creator.likes_count.toLocaleString()}</TableCell>
+                          <TableCell>
+                            {creator.is_verified ? (
+                              <Badge className="bg-blue-500 text-white text-xs">Verified</Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-xs">Unverified</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className={creator.is_verified ? "text-muted-foreground" : "text-blue-500"}
+                                disabled={verifyMutation.isPending}
+                                onClick={() => verifyMutation.mutate(creator.id)}
+                              >
+                                <ShieldCheck className="h-3.5 w-3.5 mr-1" />
+                                {creator.is_verified ? "Unverify" : "Verify"}
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => { setSelectedCreator(creator); setDetailsOpen(true); }}
+                              >
+                                View
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+                {!insightsQuery.isLoading && results.length === 0 && (
+                  <div className="py-8 text-center text-muted-foreground">No creators found.</div>
                 )}
               </CardContent>
-              <CardFooter className="flex justify-between">
-                <div className="text-sm text-muted-foreground">
-                  Showing {filteredCreators.length} of {topCreators.length} creators
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" disabled>
-                    Previous
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    Next
-                  </Button>
-                </div>
-              </CardFooter>
+              {(insightsQuery.data?.next || insightsQuery.data?.previous) && (
+                <CardFooter className="flex justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    Page {page} · {insightsQuery.data?.count ?? 0} total
+                  </p>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" disabled={!insightsQuery.data?.previous} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+                      <ChevronLeft size={14} className="mr-1" /> Previous
+                    </Button>
+                    <Button variant="outline" size="sm" disabled={!insightsQuery.data?.next} onClick={() => setPage((p) => p + 1)}>
+                      Next <ChevronRight size={14} className="ml-1" />
+                    </Button>
+                  </div>
+                </CardFooter>
+              )}
             </Card>
           </TabsContent>
-          
+
           <TabsContent value="creator-detail">
-            <CreatorPerformance creator={creatorPerformanceData} />
+            {/* Coming soon: per-creator earnings/engagement-trend detail endpoint not yet built */}
+            <CreatorPerformance />
           </TabsContent>
         </Tabs>
       </div>
 
-      {/* Creator Details Dialog */}
       {selectedCreator && (
-        <Dialog open={creatorDetailsOpen} onOpenChange={setCreatorDetailsOpen}>
-          <DialogContent className="sm:max-w-[600px]">
+        <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+          <DialogContent className="sm:max-w-[440px]">
             <DialogHeader>
-              <DialogTitle>Creator Details</DialogTitle>
-              <DialogDescription>
-                Detailed information and performance metrics.
-              </DialogDescription>
+              <DialogTitle>Creator Profile</DialogTitle>
+              <DialogDescription>Account details and real-time stats</DialogDescription>
             </DialogHeader>
-            
-            <div className="space-y-6 py-2">
-              <div className="flex items-start gap-4">
+            <div className="space-y-4 py-2">
+              <div className="flex items-center gap-4">
                 <Avatar className="h-16 w-16">
-                  <AvatarImage src={selectedCreator.avatar} alt={selectedCreator.name} />
-                  <AvatarFallback>{selectedCreator.name.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-xl font-bold">{selectedCreator.name}</h2>
-                    {selectedCreator.verified && (
-                      <Badge className="bg-blue-500">Verified</Badge>
-                    )}
-                  </div>
-                  <div className="text-sm text-muted-foreground">@{selectedCreator.username}</div>
-                  
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {selectedCreator.badges.map((badge: string, index: number) => (
-                      <Badge key={index} variant="outline" className="flex items-center gap-1">
-                        {badge === "OG" && <Crown className="h-3 w-3" />}
-                        {badge === "Rising Star" && <Star className="h-3 w-3" />}
-                        {badge === "Top Earner" && <DollarSign className="h-3 w-3" />}
-                        <span>{badge}</span>
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-4 gap-2">
-                <div className="col-span-4 sm:col-span-2 p-3 rounded-md bg-muted flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="h-4 w-4 text-green-500" />
-                    <span className="text-sm">Total Earnings</span>
-                  </div>
-                  <span className="font-bold">${selectedCreator.earnings.toLocaleString()}</span>
-                </div>
-                <div className="col-span-4 sm:col-span-2 p-3 rounded-md bg-muted flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-blue-500" />
-                    <span className="text-sm">Followers</span>
-                  </div>
-                  <span className="font-bold">{selectedCreator.followers.toLocaleString()}</span>
-                </div>
-                <div className="col-span-4 sm:col-span-2 p-3 rounded-md bg-muted flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-purple-500" />
-                    <span className="text-sm">Engagement Rate</span>
-                  </div>
-                  <span className="font-bold">{selectedCreator.engagement}%</span>
-                </div>
-                <div className="col-span-4 sm:col-span-2 p-3 rounded-md bg-muted flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Award className="h-4 w-4 text-yellow-500" />
-                    <span className="text-sm">Challenges Won</span>
-                  </div>
-                  <span className="font-bold">24</span>
-                </div>
-                <div className="col-span-4 sm:col-span-2 p-3 rounded-md bg-muted flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Gift className="h-4 w-4 text-pink-500" />
-                    <span className="text-sm">Gifts Received</span>
-                  </div>
-                  <span className="font-bold">856</span>
-                </div>
-                <div className="col-span-4 sm:col-span-2 p-3 rounded-md bg-muted flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-orange-500" />
-                    <span className="text-sm">Avg. View Time</span>
-                  </div>
-                  <span className="font-bold">1:24</span>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium mb-1">Recent Content</h3>
-                <div className="space-y-2 max-h-60 overflow-y-auto p-1">
-                  {creatorContent.map((content) => (
-                    <div key={content.id} className="p-3 border rounded-md">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h4 className="font-medium">{content.title}</h4>
-                          <div className="flex items-center text-xs text-muted-foreground">
-                            <Badge variant="outline" className="text-xs mr-2 capitalize">
-                              {content.type}
-                            </Badge>
-                            <CalendarDays className="h-3 w-3 mr-1" />
-                            <span>{formatDate(content.uploadDate)}</span>
-                          </div>
-                        </div>
-                        <Button variant="ghost" size="sm" className="h-7">
-                          <BarChart3 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      
-                      <div className="grid grid-cols-4 gap-2 mt-2">
-                        <div className="flex flex-col items-center text-xs">
-                          <span className="font-medium">{content.views.toLocaleString()}</span>
-                          <span className="text-muted-foreground">Views</span>
-                        </div>
-                        <div className="flex flex-col items-center text-xs">
-                          <span className="font-medium">{content.likes.toLocaleString()}</span>
-                          <span className="text-muted-foreground">Likes</span>
-                        </div>
-                        <div className="flex flex-col items-center text-xs">
-                          <span className="font-medium">{content.gifts}</span>
-                          <span className="text-muted-foreground">Gifts</span>
-                        </div>
-                        <div className="flex flex-col items-center text-xs">
-                          <span className="font-medium">{content.comments}</span>
-                          <span className="text-muted-foreground">Comments</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setCreatorDetailsOpen(false)}>
-                Close
-              </Button>
-              <Button>View Full Analytics</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {/* Creator Verification Dialog */}
-      {selectedCreator && (
-        <Dialog open={verificationDialogOpen} onOpenChange={setVerificationDialogOpen}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Verify Creator</DialogTitle>
-              <DialogDescription>
-                Add verified status to this creator's account.
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="py-4">
-              <div className="flex items-center gap-3">
-                <Avatar>
-                  <AvatarImage src={selectedCreator.avatar} alt={selectedCreator.name} />
-                  <AvatarFallback>{selectedCreator.name.charAt(0)}</AvatarFallback>
+                  <AvatarImage src={selectedCreator.profile_pic ?? undefined} />
+                  <AvatarFallback className="text-lg">{selectedCreator.username.charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <div className="font-medium">{selectedCreator.name}</div>
-                  <div className="text-sm text-muted-foreground">@{selectedCreator.username}</div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-bold">@{selectedCreator.username}</span>
+                    {selectedCreator.is_verified && <Badge className="bg-blue-500 text-white text-xs">Verified</Badge>}
+                  </div>
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
+                    <Mail className="h-3 w-3" />
+                    {selectedCreator.email}
+                  </div>
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <CalendarDays className="h-3 w-3" />
+                    Joined {formatDate(selectedCreator.date_joined)}
+                  </div>
                 </div>
               </div>
-              
-              <div className="mt-4 p-4 rounded-md bg-blue-50 text-blue-800 text-sm">
-                <p className="mb-2 font-medium">Verifying this creator will:</p>
-                <ul className="list-disc list-inside space-y-1">
-                  <li>Add a verification badge to their profile</li>
-                  <li>Highlight their content in discovery</li>
-                  <li>Grant access to exclusive creator features</li>
-                  <li>Improve visibility in search results</li>
-                </ul>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="p-3 rounded-md bg-muted text-center">
+                  <div className="text-xl font-bold">{selectedCreator.followers_count.toLocaleString()}</div>
+                  <div className="text-xs text-muted-foreground">Followers</div>
+                </div>
+                <div className="p-3 rounded-md bg-muted text-center">
+                  <div className="text-xl font-bold">{selectedCreator.challenges_count.toLocaleString()}</div>
+                  <div className="text-xs text-muted-foreground">Challenges</div>
+                </div>
+                <div className="p-3 rounded-md bg-muted text-center">
+                  <div className="text-xl font-bold">{selectedCreator.likes_count.toLocaleString()}</div>
+                  <div className="text-xs text-muted-foreground">Likes</div>
+                </div>
               </div>
-            </div>
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setVerificationDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button 
-                className="bg-blue-600 hover:bg-blue-700"
-                onClick={confirmVerification}
+              <Button
+                className="w-full"
+                variant={selectedCreator.is_verified ? "outline" : "default"}
+                disabled={verifyMutation.isPending}
+                onClick={() => verifyMutation.mutate(selectedCreator.id)}
               >
                 <ShieldCheck className="h-4 w-4 mr-2" />
-                Verify Creator
+                {selectedCreator.is_verified ? "Remove Verification" : "Verify Creator"}
               </Button>
-            </DialogFooter>
+              <div className="flex items-center gap-2">
+                <Award className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
+                  Earnings, badges, and content detail coming soon.
+                </span>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       )}

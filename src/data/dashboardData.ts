@@ -1,4 +1,10 @@
 
+// Coming soon: Dashboard.tsx now pulls real data from src/lib/dashboardAdminApi.ts
+// and src/lib/followingAdminApi.ts. The mock arrays below are kept (not deleted)
+// for revenue/gifts/retention/engagement widgets that have no backing backend
+// model yet — see RevenueStatsCard/MostGiftedUsersCard/RetentionCard/EngagementCard,
+// which currently render a "Coming soon" placeholder instead of these numbers.
+
 // Mock data for charts
 export const userActivityData = [
   { name: "Mon", users: 420, challenges: 63 },

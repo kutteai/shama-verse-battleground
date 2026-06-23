@@ -30,7 +30,14 @@ import UserBehavior from "./pages/admin/UserBehavior";
 import CommentManagement from "./pages/admin/CommentManagement";
 import SystemTools from "./pages/admin/SystemTools";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      retry: 1,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

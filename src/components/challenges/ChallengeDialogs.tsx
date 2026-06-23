@@ -1,5 +1,5 @@
 
-import { Challenge } from "./ChallengeTable";
+import type { AdminChallenge } from "@/lib/challengesAdminApi";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,6 +11,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+// Re-export for any remaining callers that imported Challenge from here
+export type { AdminChallenge as Challenge };
+
 interface ChallengeDialogsProps {
   isPauseDialogOpen: boolean;
   setPauseDialogOpen: (open: boolean) => void;
@@ -18,10 +21,11 @@ interface ChallengeDialogsProps {
   setBanDialogOpen: (open: boolean) => void;
   isDeleteDialogOpen: boolean;
   setDeleteDialogOpen: (open: boolean) => void;
-  selectedChallenge: Challenge | null;
+  selectedChallenge: AdminChallenge | null;
   onPauseChallenge: () => void;
   onBanChallenge: () => void;
   onDeleteChallenge: () => void;
+  isPending?: boolean;
 }
 
 const ChallengeDialogs = ({
@@ -34,7 +38,8 @@ const ChallengeDialogs = ({
   selectedChallenge,
   onPauseChallenge,
   onBanChallenge,
-  onDeleteChallenge
+  onDeleteChallenge,
+  isPending,
 }: ChallengeDialogsProps) => {
   return (
     <>
@@ -44,13 +49,11 @@ const ChallengeDialogs = ({
           <AlertDialogHeader>
             <AlertDialogTitle>Pause Challenge</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to pause this challenge? 
+              Are you sure you want to pause this challenge?
               {selectedChallenge && (
-                <span className="font-medium block mt-2">
-                  "{selectedChallenge.title}"
-                </span>
+                <span className="font-medium block mt-2">"{selectedChallenge.title}"</span>
               )}
-              This will temporarily suspend voting and participation.
+              This will flag it as paused by admin.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -58,8 +61,9 @@ const ChallengeDialogs = ({
             <AlertDialogAction
               onClick={onPauseChallenge}
               className="bg-yellow-500 hover:bg-yellow-600"
+              disabled={isPending}
             >
-              Pause Challenge
+              {isPending ? "Pausing…" : "Pause Challenge"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -73,11 +77,9 @@ const ChallengeDialogs = ({
             <AlertDialogDescription>
               Are you sure you want to ban this challenge?
               {selectedChallenge && (
-                <span className="font-medium block mt-2">
-                  "{selectedChallenge.title}"
-                </span>
+                <span className="font-medium block mt-2">"{selectedChallenge.title}"</span>
               )}
-              This will flag it as inappropriate and hide it from public view.
+              This will hide it from public view.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -85,8 +87,9 @@ const ChallengeDialogs = ({
             <AlertDialogAction
               onClick={onBanChallenge}
               className="bg-red-500 hover:bg-red-600"
+              disabled={isPending}
             >
-              Ban Challenge
+              {isPending ? "Banning…" : "Ban Challenge"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -100,9 +103,7 @@ const ChallengeDialogs = ({
             <AlertDialogDescription>
               Are you sure you want to permanently delete this challenge?
               {selectedChallenge && (
-                <span className="font-medium block mt-2">
-                  "{selectedChallenge.title}"
-                </span>
+                <span className="font-medium block mt-2">"{selectedChallenge.title}"</span>
               )}
               This action cannot be undone.
             </AlertDialogDescription>
@@ -112,8 +113,9 @@ const ChallengeDialogs = ({
             <AlertDialogAction
               onClick={onDeleteChallenge}
               className="bg-red-700 hover:bg-red-800"
+              disabled={isPending}
             >
-              Delete Challenge
+              {isPending ? "Deleting…" : "Delete Challenge"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from "sonner";
 
 const Login = () => {
@@ -32,7 +32,7 @@ const Login = () => {
       await login(email, password);
       navigate(from, { replace: true });
     } catch (error) {
-      console.error("Login failed:", error);
+      toast.error(error instanceof Error ? error.message : "Login failed");
       setIsSubmitting(false);
     }
   };
@@ -102,12 +102,6 @@ const Login = () => {
               </Button>
             </form>
           </CardContent>
-          
-          <CardFooter className="flex flex-col items-center justify-center space-y-2">
-            <p className="text-sm text-muted-foreground text-center">
-              For demo: admin@shamachallenge.com / admin123
-            </p>
-          </CardFooter>
         </Card>
       </div>
     </div>

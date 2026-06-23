@@ -6,13 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 
 interface FollowedUser {
-  id: string;
-  name: string;
+  id: number;
   username: string;
-  avatar: string;
-  followers: number;
-  growthRate: number;
-  genres: string[];
+  profile_pic: string | null;
+  talent: string | null;
+  followers_count: number;
 }
 
 interface TopFollowedUsersProps {
@@ -20,9 +18,8 @@ interface TopFollowedUsersProps {
 }
 
 const TopFollowedUsers = ({ users }: TopFollowedUsersProps) => {
-  // Find the highest follower count to normalize progress bars
-  const maxFollowers = Math.max(...users.map(user => user.followers));
-  
+  const maxFollowers = Math.max(1, ...users.map((user) => user.followers_count));
+
   return (
     <Card>
       <CardHeader>
@@ -35,41 +32,37 @@ const TopFollowedUsers = ({ users }: TopFollowedUsersProps) => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {users.map((user, index) => (
-            <div key={user.id} className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-muted-foreground w-5">
-                    {index + 1}.
-                  </span>
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-sm font-medium">{user.name}</p>
-                    <p className="text-xs text-muted-foreground">@{user.username}</p>
+        {users.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No users yet.</p>
+        ) : (
+          <div className="space-y-4">
+            {users.map((user, index) => (
+              <div key={user.id} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-muted-foreground w-5">
+                      {index + 1}.
+                    </span>
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={user.profile_pic ?? undefined} alt={user.username} />
+                      <AvatarFallback>{user.username.charAt(0).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-sm font-medium">@{user.username}</p>
+                    </div>
                   </div>
+                  <p className="text-sm font-medium">{user.followers_count.toLocaleString()} followers</p>
                 </div>
-                <div className="flex flex-col items-end">
-                  <p className="text-sm font-medium">{user.followers.toLocaleString()} followers</p>
-                  <p className={`text-xs ${user.growthRate > 0 ? "text-green-500" : "text-red-500"}`}>
-                    {user.growthRate > 0 ? "+" : ""}{user.growthRate}% this week
-                  </p>
-                </div>
-              </div>
-              <Progress value={(user.followers / maxFollowers) * 100} className="h-2" />
-              <div className="flex gap-1 flex-wrap">
-                {user.genres.map((genre) => (
-                  <Badge key={genre} variant="outline" className="text-xs px-2 py-0">
-                    {genre}
+                <Progress value={(user.followers_count / maxFollowers) * 100} className="h-2" />
+                {user.talent && (
+                  <Badge variant="outline" className="text-xs px-2 py-0">
+                    {user.talent}
                   </Badge>
-                ))}
+                )}
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

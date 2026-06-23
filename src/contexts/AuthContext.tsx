@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { adminLogin } from '@/lib/adminAuthApi';
 
 // Define the user type with isAdmin property
 export interface User {
@@ -53,30 +54,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
-    
+
     try {
-      // Simulate API call with 500ms delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Mock user data - in a real app this would come from your backend
-      const mockUser: User = {
-        id: "usr_12345",
-        name: "Admin User",
-        email: email,
-        role: "admin",
-        avatar: "https://i.pravatar.cc/150?img=68",
-        isAdmin: true
+      const response = await adminLogin(email, password);
+      const { user: adminUser, token } = response;
+
+      const mappedUser: User = {
+        id: String(adminUser.id),
+        name: [adminUser.first_name, adminUser.last_name].filter(Boolean).join(' ') || adminUser.username,
+        email: adminUser.email,
+        role: 'admin',
+        isAdmin: adminUser.is_staff || adminUser.is_superuser || adminUser.is_admin,
       };
-      
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      
+
+      setUser(mappedUser);
+      localStorage.setItem('user', JSON.stringify(mappedUser));
+      localStorage.setItem('admin_token', token);
+
       // Redirect to dashboard or the page they were trying to access
       const origin = location.state?.from?.pathname || '/dashboard';
       navigate(origin);
-    } catch (error) {
-      console.error('Login failed:', error);
-      throw new Error('Invalid email or password');
     } finally {
       setIsLoading(false);
     }
@@ -85,6 +82,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
+    localStorage.removeItem('admin_token');
     navigate('/login');
   };
 
