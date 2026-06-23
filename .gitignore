@@ -1,6 +1,11 @@
-# Lock files — project uses Yarn; ignore npm and bun lock files
-package-lock.json
+# Lock files — project uses npm
 bun.lockb
+yarn.lock
+
+# Yarn Berry PnP artifacts (not used — project uses npm)
+.yarn/
+.pnp.cjs
+.pnp.loader.mjs
 
 # Logs
 logs
