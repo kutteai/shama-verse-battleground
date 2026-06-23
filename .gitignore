@@ -1,3 +1,7 @@
+# Lock files — project uses Yarn; ignore npm and bun lock files
+package-lock.json
+bun.lockb
+
 # Logs
 logs
 *.log
