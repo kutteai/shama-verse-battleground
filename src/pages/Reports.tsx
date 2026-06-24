@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import NotAvailablePanel from "@/components/shared/NotAvailablePanel";
-import { Search, Flag, AlertOctagon, FileWarning, User, MessageSquare, Music } from "lucide-react";
+import { Search, Flag, AlertOctagon, FileWarning, User, MessageSquare, Music, Play } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -47,6 +47,67 @@ const formatDate = (iso: string) =>
   new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(
     new Date(iso)
   );
+
+// Inline video player used inside the report review dialog
+const ReportMediaPreview = ({ report }: { report: import("@/lib/reportsAdminApi").AdminReport }) => {
+  const [playing, setPlaying] = useState(false);
+
+  const hasVideo = !!report.target_video_url;
+  const hasThumbnail = !!report.target_thumbnail_url;
+  const hasPhoto = !!report.photo_url;
+  const hasProfilePic = !!report.target_profile_pic;
+
+  if (!hasVideo && !hasPhoto && !hasProfilePic && !hasThumbnail) return null;
+
+  return (
+    <div className="space-y-2">
+      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Media</p>
+      <div className="grid grid-cols-1 gap-3">
+        {/* Reported content media */}
+        {hasVideo && (
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Reported video</p>
+            <div className="relative aspect-video rounded-md overflow-hidden bg-black">
+              {playing ? (
+                <video src={report.target_video_url!} className="w-full h-full object-contain" controls autoPlay onEnded={() => setPlaying(false)} />
+              ) : (
+                <>
+                  {hasThumbnail ? (
+                    <img src={report.target_thumbnail_url!} alt="video thumbnail" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-muted"><Music size={24} className="text-muted-foreground" /></div>
+                  )}
+                  <button onClick={() => setPlaying(true)} className="absolute inset-0 flex items-center justify-center">
+                    <span className="bg-black/50 hover:bg-black/70 rounded-full p-2.5"><Play className="h-5 w-5 text-white fill-white" /></span>
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+        {!hasVideo && hasThumbnail && (
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Content thumbnail</p>
+            <img src={report.target_thumbnail_url!} alt="thumbnail" className="rounded-md max-h-48 object-cover" />
+          </div>
+        )}
+        {hasProfilePic && (
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Reported user's profile picture</p>
+            <img src={report.target_profile_pic!} alt="profile" className="rounded-full h-16 w-16 object-cover" />
+          </div>
+        )}
+        {/* Reporter's evidence photo */}
+        {hasPhoto && (
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Reporter's evidence photo</p>
+            <img src={report.photo_url!} alt="evidence" className="rounded-md max-h-48 object-cover border" />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const Reports = () => {
   const [activeTab, setActiveTab] = useState("reports");
@@ -391,6 +452,7 @@ const Reports = () => {
               {selectedReport.description && (
                 <div className="p-3 bg-muted rounded-md text-sm">{selectedReport.description}</div>
               )}
+              <ReportMediaPreview report={selectedReport} />
               <div className="space-y-2">
                 <Label>Update Status</Label>
                 <Select value={actionStatus} onValueChange={setActionStatus}>

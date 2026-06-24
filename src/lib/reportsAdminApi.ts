@@ -29,6 +29,12 @@ export interface AdminReport {
   }
   target_label: string
   target_id: string
+  // Evidence photo uploaded by the reporter
+  photo_url: string | null
+  // Media from the reported content itself
+  target_video_url: string | null
+  target_thumbnail_url: string | null
+  target_profile_pic: string | null
   reason: string
   description: string
   status: ReportStatusValue
