@@ -3,6 +3,39 @@ import { apiRequest } from "@/lib/apiClient"
 export interface AdminChallengeUser {
   id: number
   username: string
+  profile_pic?: string | null
+}
+
+export interface AdminChallengeVideo {
+  id: string
+  video_url: string
+  thumbnail_url: string | null
+  views_count: number
+  likes_count: number
+  share_count: number
+  favorite_count: number
+  comments_count: number
+  vote_count: number
+  created_at: string
+}
+
+export interface AdminChallengeDetail {
+  id: string
+  title: string
+  description: string | null
+  status: number
+  status_display: string
+  challenge_type: number
+  challenge_type_display: string
+  created_at: string
+  started_at: string | null
+  video_upload_deadline: string | null
+  is_paused_by_admin: boolean
+  is_banned_by_admin: boolean
+  challenger: AdminChallengeUser
+  challengee: AdminChallengeUser
+  challenger_video: AdminChallengeVideo | null
+  challengee_video: AdminChallengeVideo | null
 }
 
 export interface AdminChallenge {
@@ -74,4 +107,10 @@ export function deleteChallenge(challengeId: string, reason?: string): Promise<v
     method: "DELETE",
     body: JSON.stringify({ reason: reason ?? "" }),
   })
+}
+
+export function getChallengeDetail(challengeId: string): Promise<AdminChallengeDetail> {
+  return apiRequest<AdminChallengeDetail>(
+    `/api/v1/challenge/admin/challenges/${challengeId}/detail/`
+  )
 }

@@ -18,5 +18,6 @@ export const queryKeys = {
   reportModerationLogs: (search: string) => ["reports", "moderation-logs", search] as const,
   challenges: (status: string, challengeType: string, search: string, page: number) =>
     ["challenges", status, challengeType, search, page] as const,
+  challengeDetail: (id: string) => ["challenges", "detail", id] as const,
   notificationCampaigns: (page: number) => ["notifications", "campaigns", page] as const,
 }

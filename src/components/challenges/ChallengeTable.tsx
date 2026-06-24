@@ -23,6 +23,7 @@ import {
   PlayCircle,
   Ban,
   Trash2,
+  Eye,
 } from "lucide-react";
 import type { AdminChallenge } from "@/lib/challengesAdminApi";
 
@@ -31,6 +32,7 @@ export type { AdminChallenge as Challenge };
 
 interface ChallengeTableProps {
   challenges: AdminChallenge[];
+  onViewChallenge: (challenge: AdminChallenge) => void;
   onPauseChallenge: (challenge: AdminChallenge) => void;
   onResumeChallenge: (challenge: AdminChallenge) => void;
   onBanChallenge: (challenge: AdminChallenge) => void;
@@ -42,6 +44,7 @@ const formatDate = (iso: string) =>
 
 const ChallengeTable = ({
   challenges,
+  onViewChallenge,
   onPauseChallenge,
   onResumeChallenge,
   onBanChallenge,
@@ -105,6 +108,11 @@ const ChallengeTable = ({
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => onViewChallenge(ch)}>
+                      <Eye className="mr-2 h-4 w-4 text-blue-500" />
+                      View Videos &amp; Stats
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     {ch.is_paused_by_admin ? (
                       <DropdownMenuItem onClick={() => onResumeChallenge(ch)}>

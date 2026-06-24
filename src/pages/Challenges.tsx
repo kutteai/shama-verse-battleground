@@ -10,6 +10,7 @@ import ChallengeTable from "@/components/challenges/ChallengeTable";
 import ChallengeFilters from "@/components/challenges/ChallengeFilters";
 import ChallengeStats from "@/components/challenges/ChallengeStats";
 import ChallengeDialogs from "@/components/challenges/ChallengeDialogs";
+import ChallengeDetailDialog from "@/components/challenges/ChallengeDetailDialog";
 
 import {
   getChallenges,
@@ -34,6 +35,7 @@ const Challenges = () => {
 
   const [dialogAction, setDialogAction] = useState<DialogAction>(null);
   const [selectedChallenge, setSelectedChallenge] = useState<AdminChallenge | null>(null);
+  const [detailChallengeId, setDetailChallengeId] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -149,6 +151,7 @@ const Challenges = () => {
                 ) : (
                   <ChallengeTable
                     challenges={challenges}
+                    onViewChallenge={(ch) => setDetailChallengeId(ch.id)}
                     onPauseChallenge={(ch) => { setSelectedChallenge(ch); setDialogAction("pause"); }}
                     onResumeChallenge={(ch) => resumeMutation.mutate(ch.id)}
                     onBanChallenge={(ch) => { setSelectedChallenge(ch); setDialogAction("ban"); }}
@@ -175,6 +178,12 @@ const Challenges = () => {
         onBanChallenge={() => banMutation.mutate()}
         onDeleteChallenge={() => deleteMutation.mutate()}
         isPending={isPending}
+      />
+
+      <ChallengeDetailDialog
+        challengeId={detailChallengeId}
+        open={!!detailChallengeId}
+        onOpenChange={(open) => { if (!open) setDetailChallengeId(null); }}
       />
     </DashboardLayout>
   );
