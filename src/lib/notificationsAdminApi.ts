@@ -35,7 +35,7 @@ export function broadcastNotification(params: {
   message: string
   recipient_type: RecipientType
   user_ids?: number[]
-}): Promise<{ id: string; status: string; recipient_count: number; sent_at: string | null }> {
+}): Promise<{ id: string; status: string; queued: boolean }> {
   return apiRequest(`/api/v1/challenge/admin/notifications/broadcast/`, {
     method: "POST",
     body: JSON.stringify(params),

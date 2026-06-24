@@ -83,8 +83,8 @@ const Notifications = () => {
         recipient_type: recipientType,
         user_ids: recipientType === "specific" ? specificIds.split(",").map((s) => Number(s.trim())).filter(Boolean) : undefined,
       }),
-    onSuccess: (data) => {
-      toast.success(`Sent to ${data.recipient_count} users`);
+    onSuccess: () => {
+      toast.success("Broadcast queued — your Celery worker will deliver it shortly");
       resetForm();
       queryClient.invalidateQueries({ queryKey: queryKeys.notificationCampaigns(1) });
       setActiveTab("sent");
