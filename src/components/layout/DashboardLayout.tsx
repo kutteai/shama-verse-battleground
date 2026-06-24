@@ -99,7 +99,7 @@ export default function DashboardLayout({
       variant: location.pathname === "/challenges" ? "default" : "ghost",
     },
     {
-      title: "Freestyles",
+      title: "Performance Videos",
       href: "/freestyles",
       icon: <Music className="w-5 h-5" />,
       variant: location.pathname === "/freestyles" ? "default" : "ghost",
@@ -287,7 +287,7 @@ function SidebarNav({ isOpen, onToggle }: SidebarNavProps) {
       variant: location.pathname === "/challenges" ? "default" : "ghost",
     },
     {
-      title: "Freestyles",
+      title: "Performance Videos",
       href: "/freestyles",
       icon: <Music className="w-5 h-5" />,
       variant: location.pathname === "/freestyles" ? "default" : "ghost",

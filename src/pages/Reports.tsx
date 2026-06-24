@@ -52,8 +52,8 @@ const Reports = () => {
   const [activeTab, setActiveTab] = useState("reports");
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
-  const [contentTypeFilter, setContentTypeFilter] = useState<string>("");
-  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [contentTypeFilter, setContentTypeFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [logSearch, setLogSearch] = useState("");
   const [logSearchInput, setLogSearchInput] = useState("");
 
@@ -68,8 +68,8 @@ const Reports = () => {
     queryKey: queryKeys.reports(contentTypeFilter, statusFilter, search),
     queryFn: () =>
       getReports({
-        content_type: contentTypeFilter as ReportType || undefined,
-        status: statusFilter ? (Number(statusFilter) as ReportStatusValue) : undefined,
+        content_type: contentTypeFilter !== "all" ? contentTypeFilter as ReportType : undefined,
+        status: statusFilter !== "all" ? (Number(statusFilter) as ReportStatusValue) : undefined,
         search: search || undefined,
       }),
   });
@@ -166,7 +166,7 @@ const Reports = () => {
                   <SelectValue placeholder="All types" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All types</SelectItem>
+                  <SelectItem value="all">All types</SelectItem>
                   <SelectItem value="challenge">Challenge</SelectItem>
                   <SelectItem value="video">Video</SelectItem>
                   <SelectItem value="user">User</SelectItem>
@@ -178,7 +178,7 @@ const Reports = () => {
                   <SelectValue placeholder="All statuses" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All statuses</SelectItem>
+                  <SelectItem value="all">All statuses</SelectItem>
                   <SelectItem value="1">Pending</SelectItem>
                   <SelectItem value="2">In Progress</SelectItem>
                   <SelectItem value="3">Resolved</SelectItem>

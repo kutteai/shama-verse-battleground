@@ -55,7 +55,7 @@ const ChallengeFilters = ({
                     <SelectValue placeholder="All Types" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Types</SelectItem>
+                    <SelectItem value="all">All Types</SelectItem>
                     <SelectItem value="1">Free</SelectItem>
                     <SelectItem value="2">Paid</SelectItem>
                   </SelectContent>
@@ -69,12 +69,16 @@ const ChallengeFilters = ({
                     <SelectValue placeholder="All Statuses" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Statuses</SelectItem>
+                    <SelectItem value="all">All Statuses</SelectItem>
                     <SelectItem value="1">Pending</SelectItem>
                     <SelectItem value="2">Accepted</SelectItem>
+                    <SelectItem value="3">Rejected</SelectItem>
+                    <SelectItem value="4">Expired</SelectItem>
                     <SelectItem value="5">Running</SelectItem>
                     <SelectItem value="6">Completed</SelectItem>
                     <SelectItem value="7">Cancelled</SelectItem>
+                    <SelectItem value="8">Rescheduled</SelectItem>
+                    <SelectItem value="9">Forfeited</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -94,7 +98,7 @@ const ChallengeFilters = ({
 
       <form
         onSubmit={(e) => { e.preventDefault(); onSearch(); }}
-        className="flex mb-4"
+        className="flex gap-2 mb-4"
       >
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
@@ -105,6 +109,7 @@ const ChallengeFilters = ({
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
+        <Button type="submit">Search</Button>
       </form>
     </>
   );

@@ -27,8 +27,8 @@ const Challenges = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
-  const [selectedType, setSelectedType] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("");
+  const [selectedType, setSelectedType] = useState("all");
+  const [selectedStatus, setSelectedStatus] = useState("all");
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [page] = useState(1);
 
@@ -44,15 +44,19 @@ const Challenges = () => {
     completed: "6",
     banned: "",
   };
-  const effectiveStatus = activeTab !== "all" ? (tabStatusMap[activeTab] ?? "") : selectedStatus;
+  const effectiveStatus = activeTab !== "all" ? (tabStatusMap[activeTab] ?? "all") : selectedStatus;
   const isBannedTab = activeTab === "banned";
+
+  // "all" is the sentinel meaning no filter — strip it before sending to the API
+  const apiStatus = effectiveStatus && effectiveStatus !== "all" ? Number(effectiveStatus) : undefined;
+  const apiType = selectedType && selectedType !== "all" ? Number(selectedType) : undefined;
 
   const challengesQuery = useQuery({
     queryKey: queryKeys.challenges(selectedStatus, selectedType, search, page),
     queryFn: () =>
       getChallenges({
-        status: effectiveStatus ? Number(effectiveStatus) : undefined,
-        challenge_type: selectedType ? Number(selectedType) : undefined,
+        status: apiStatus,
+        challenge_type: apiType,
         search: search || undefined,
         page,
       }),
@@ -94,8 +98,8 @@ const Challenges = () => {
   });
 
   const resetFilters = () => {
-    setSelectedType("");
-    setSelectedStatus("");
+    setSelectedType("all");
+    setSelectedStatus("all");
     setSearchInput("");
     setSearch("");
   };

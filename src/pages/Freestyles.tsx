@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -42,12 +43,107 @@ const ORDERING_OPTIONS: { value: FreestyleOrdering; label: string }[] = [
 const formatDate = (dateString: string) =>
   new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(new Date(dateString));
 
+// Inline video player card — shows thumbnail until Play is clicked, then swaps to <video>
+const VideoCard = ({
+  video,
+  onViewDetails,
+}: {
+  video: AdminFreestyleVideo;
+  onViewDetails: () => void;
+}) => {
+  const [playing, setPlaying] = useState(false);
+
+  return (
+    <Card className="overflow-hidden">
+      <div className="relative aspect-video bg-black">
+        {playing && video.video_url ? (
+          <video
+            src={video.video_url}
+            className="w-full h-full object-contain"
+            controls
+            autoPlay
+            onEnded={() => setPlaying(false)}
+          />
+        ) : (
+          <>
+            {video.thumbnail_url ? (
+              <img
+                src={video.thumbnail_url}
+                alt={video.title}
+                className="object-cover w-full h-full"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-muted">
+                <Music className="text-muted-foreground" size={32} />
+              </div>
+            )}
+            {video.video_url && (
+              <button
+                onClick={() => setPlaying(true)}
+                className="absolute inset-0 flex items-center justify-center group"
+                aria-label="Play video"
+              >
+                <span className="bg-black/50 group-hover:bg-black/70 transition-colors rounded-full p-3">
+                  <Play className="h-7 w-7 text-white fill-white" />
+                </span>
+              </button>
+            )}
+          </>
+        )}
+      </div>
+
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base line-clamp-1">{video.title || "Untitled"}</CardTitle>
+        <div className="flex items-center gap-2">
+          <Avatar className="h-6 w-6">
+            <AvatarImage src={video.user.profile_pic ?? undefined} />
+            <AvatarFallback>{video.user.username.charAt(0).toUpperCase()}</AvatarFallback>
+          </Avatar>
+          <CardDescription>{video.user.username}</CardDescription>
+          {video.user.talent && (
+            <Badge variant="outline" className="text-xs">{video.user.talent}</Badge>
+          )}
+        </div>
+      </CardHeader>
+
+      <CardContent className="pb-2">
+        <div className="grid grid-cols-4 gap-2">
+          {[
+            { icon: <Eye size={14} />, val: video.views_count, label: "Views" },
+            { icon: <Heart size={14} />, val: video.likes_count, label: "Likes" },
+            { icon: <Share2 size={14} />, val: video.share_count, label: "Shares" },
+            { icon: <Bookmark size={14} />, val: video.favorite_count, label: "Saves" },
+          ].map(({ icon, val, label }) => (
+            <div key={label} className="flex flex-col items-center">
+              <div className="flex items-center text-sm gap-0.5 text-muted-foreground">
+                {icon}
+                <span className="text-foreground">{val.toLocaleString()}</span>
+              </div>
+              <span className="text-xs text-muted-foreground">{label}</span>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+
+      <CardFooter className="flex justify-between py-2">
+        <div className="flex items-center text-xs text-muted-foreground">
+          <Calendar size={14} className="mr-1" />
+          {formatDate(video.created_at)}
+        </div>
+        <Button variant="ghost" size="sm" onClick={onViewDetails}>
+          Details
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+};
+
 const Freestyles = () => {
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [ordering, setOrdering] = useState<FreestyleOrdering>("-created_at");
   const [page, setPage] = useState(1);
-  const [selectedFreestyle, setSelectedFreestyle] = useState<AdminFreestyleVideo | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<AdminFreestyleVideo | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
   const freestylesQuery = useQuery({
@@ -68,8 +164,8 @@ const Freestyles = () => {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Freestyle Content Management</h1>
-          <p className="text-muted-foreground">Browse and review freestyle (personal) video uploads.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Performance Videos</h1>
+          <p className="text-muted-foreground">Browse and review personal performance video uploads.</p>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4">
@@ -99,103 +195,25 @@ const Freestyles = () => {
         {freestylesQuery.isLoading ? (
           <div className="h-[300px] flex items-center justify-center text-muted-foreground">Loading...</div>
         ) : freestylesQuery.isError ? (
-          <p className="text-sm text-destructive">Failed to load freestyles.</p>
+          <p className="text-sm text-destructive">Failed to load videos.</p>
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {results.map((freestyle) => (
-                <Card key={freestyle.id} className="overflow-hidden">
-                  <div className="relative aspect-video bg-muted">
-                    {freestyle.thumbnail_url ? (
-                      <img
-                        src={freestyle.thumbnail_url}
-                        alt={freestyle.title}
-                        className="object-cover w-full h-full"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Music className="text-muted-foreground" size={32} />
-                      </div>
-                    )}
-                    {freestyle.video_url && (
-                      <a
-                        href={freestyle.video_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 rounded-full p-2"
-                      >
-                        <Play className="h-6 w-6 text-white" />
-                      </a>
-                    )}
-                  </div>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base line-clamp-1">{freestyle.title || "Untitled"}</CardTitle>
-                    <div className="flex items-center gap-2">
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={freestyle.user.profile_pic ?? undefined} />
-                        <AvatarFallback>{freestyle.user.username.charAt(0).toUpperCase()}</AvatarFallback>
-                      </Avatar>
-                      <CardDescription>{freestyle.user.username}</CardDescription>
-                      {freestyle.user.talent && (
-                        <Badge variant="outline" className="text-xs">{freestyle.user.talent}</Badge>
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pb-2">
-                    <div className="grid grid-cols-4 gap-2">
-                      <div className="flex flex-col items-center">
-                        <div className="flex items-center text-sm">
-                          <Eye size={14} className="mr-1 text-muted-foreground" />
-                          <span>{freestyle.views_count.toLocaleString()}</span>
-                        </div>
-                        <span className="text-xs text-muted-foreground">Views</span>
-                      </div>
-                      <div className="flex flex-col items-center">
-                        <div className="flex items-center text-sm">
-                          <Heart size={14} className="mr-1 text-muted-foreground" />
-                          <span>{freestyle.likes_count.toLocaleString()}</span>
-                        </div>
-                        <span className="text-xs text-muted-foreground">Likes</span>
-                      </div>
-                      <div className="flex flex-col items-center">
-                        <div className="flex items-center text-sm">
-                          <Share2 size={14} className="mr-1 text-muted-foreground" />
-                          <span>{freestyle.share_count.toLocaleString()}</span>
-                        </div>
-                        <span className="text-xs text-muted-foreground">Shares</span>
-                      </div>
-                      <div className="flex flex-col items-center">
-                        <div className="flex items-center text-sm">
-                          <Bookmark size={14} className="mr-1 text-muted-foreground" />
-                          <span>{freestyle.favorite_count.toLocaleString()}</span>
-                        </div>
-                        <span className="text-xs text-muted-foreground">Saves</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="flex justify-between py-2">
-                    <div className="flex items-center text-xs text-muted-foreground">
-                      <Calendar size={14} className="mr-1" />
-                      {formatDate(freestyle.created_at)}
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedFreestyle(freestyle);
-                        setDetailsOpen(true);
-                      }}
-                    >
-                      View Details
-                    </Button>
-                  </CardFooter>
-                </Card>
+              {results.map((video) => (
+                <VideoCard
+                  key={video.id}
+                  video={video}
+                  onViewDetails={() => {
+                    setSelectedVideo(video);
+                    setDetailsOpen(true);
+                  }}
+                />
               ))}
 
               {results.length === 0 && (
                 <div className="col-span-3 border rounded-lg p-8 flex flex-col items-center justify-center">
                   <Music size={48} className="text-muted-foreground mb-4" />
-                  <p className="text-lg text-muted-foreground">No freestyles found</p>
+                  <p className="text-lg text-muted-foreground">No performance videos found</p>
                   <p className="text-sm text-muted-foreground">Try adjusting your search.</p>
                 </div>
               )}
@@ -226,7 +244,7 @@ const Freestyles = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Top Performing Freestyles (this page)</CardTitle>
+                  <CardTitle>Top Performing Videos (this page)</CardTitle>
                   <CardDescription>By views, among currently loaded results</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -252,13 +270,13 @@ const Freestyles = () => {
               <Card>
                 <CardHeader>
                   <CardTitle>Content Overview</CardTitle>
-                  <CardDescription>Freestyle upload totals</CardDescription>
+                  <CardDescription>Performance video upload totals</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 gap-4">
                     <Card>
                       <CardHeader className="py-2">
-                        <CardTitle className="text-base">Total Freestyles</CardTitle>
+                        <CardTitle className="text-base">Total Videos</CardTitle>
                       </CardHeader>
                       <CardContent className="py-2">
                         <div className="text-3xl font-bold">{(freestylesQuery.data?.count ?? 0).toLocaleString()}</div>
@@ -281,75 +299,69 @@ const Freestyles = () => {
         )}
       </div>
 
-      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+      {/* Detail dialog — plays the video inline */}
+      <Dialog open={detailsOpen} onOpenChange={(open) => { setDetailsOpen(open); }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Freestyle Details</DialogTitle>
-            <DialogDescription>Real engagement data for this upload.</DialogDescription>
+            <DialogTitle>{selectedVideo?.title || "Untitled"}</DialogTitle>
+            <DialogDescription>
+              Uploaded by @{selectedVideo?.user.username} · {selectedVideo ? formatDate(selectedVideo.created_at) : ""}
+            </DialogDescription>
           </DialogHeader>
 
-          {selectedFreestyle && (
+          {selectedVideo && (
             <div className="space-y-4">
-              <div className="aspect-video relative rounded-md overflow-hidden bg-muted">
-                {selectedFreestyle.thumbnail_url ? (
-                  <img
-                    src={selectedFreestyle.thumbnail_url}
-                    alt={selectedFreestyle.title}
-                    className="object-cover w-full h-full"
+              <div className="aspect-video rounded-md overflow-hidden bg-black">
+                {selectedVideo.video_url ? (
+                  <video
+                    key={selectedVideo.id}
+                    src={selectedVideo.video_url}
+                    className="w-full h-full object-contain"
+                    controls
+                    autoPlay
+                    poster={selectedVideo.thumbnail_url ?? undefined}
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center">
+                  <div className="w-full h-full flex items-center justify-center bg-muted">
                     <Music className="text-muted-foreground" size={32} />
+                    <p className="ml-2 text-muted-foreground text-sm">No video URL available</p>
                   </div>
                 )}
               </div>
 
-              <div>
-                <h3 className="text-lg font-medium">{selectedFreestyle.title || "Untitled"}</h3>
-                <div className="text-sm text-muted-foreground">{formatDate(selectedFreestyle.created_at)}</div>
-              </div>
-
               <div className="flex items-center gap-3">
                 <Avatar>
-                  <AvatarImage src={selectedFreestyle.user.profile_pic ?? undefined} />
-                  <AvatarFallback>{selectedFreestyle.user.username.charAt(0).toUpperCase()}</AvatarFallback>
+                  <AvatarImage src={selectedVideo.user.profile_pic ?? undefined} />
+                  <AvatarFallback>{selectedVideo.user.username.charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <div className="font-medium">{selectedFreestyle.user.username}</div>
-                  {selectedFreestyle.user.talent && (
-                    <div className="text-sm text-muted-foreground">{selectedFreestyle.user.talent}</div>
+                  <div className="font-medium">{selectedVideo.user.username}</div>
+                  {selectedVideo.user.talent && (
+                    <div className="text-sm text-muted-foreground">{selectedVideo.user.talent}</div>
                   )}
                 </div>
               </div>
 
               <div className="grid grid-cols-4 gap-3">
-                <div className="flex flex-col gap-1 items-center justify-center p-3 border rounded-md">
-                  <Eye size={20} className="text-muted-foreground mb-1" />
-                  <div className="text-xl font-bold">{selectedFreestyle.views_count.toLocaleString()}</div>
-                  <div className="text-xs text-muted-foreground">Views</div>
-                </div>
-                <div className="flex flex-col gap-1 items-center justify-center p-3 border rounded-md">
-                  <Heart size={20} className="text-muted-foreground mb-1" />
-                  <div className="text-xl font-bold">{selectedFreestyle.likes_count.toLocaleString()}</div>
-                  <div className="text-xs text-muted-foreground">Likes</div>
-                </div>
-                <div className="flex flex-col gap-1 items-center justify-center p-3 border rounded-md">
-                  <Share2 size={20} className="text-muted-foreground mb-1" />
-                  <div className="text-xl font-bold">{selectedFreestyle.share_count.toLocaleString()}</div>
-                  <div className="text-xs text-muted-foreground">Shares</div>
-                </div>
-                <div className="flex flex-col gap-1 items-center justify-center p-3 border rounded-md">
-                  <Bookmark size={20} className="text-muted-foreground mb-1" />
-                  <div className="text-xl font-bold">{selectedFreestyle.favorite_count.toLocaleString()}</div>
-                  <div className="text-xs text-muted-foreground">Saves</div>
-                </div>
+                {[
+                  { icon: <Eye size={20} />, val: selectedVideo.views_count, label: "Views" },
+                  { icon: <Heart size={20} />, val: selectedVideo.likes_count, label: "Likes" },
+                  { icon: <Share2 size={20} />, val: selectedVideo.share_count, label: "Shares" },
+                  { icon: <Bookmark size={20} />, val: selectedVideo.favorite_count, label: "Saves" },
+                ].map(({ icon, val, label }) => (
+                  <div key={label} className="flex flex-col gap-1 items-center justify-center p-3 border rounded-md">
+                    <span className="text-muted-foreground">{icon}</span>
+                    <div className="text-xl font-bold">{val.toLocaleString()}</div>
+                    <div className="text-xs text-muted-foreground">{label}</div>
+                  </div>
+                ))}
               </div>
 
               {/* Coming soon: no moderation status/feature flag or delete endpoint exists for
-                  freestyle videos yet — admin actions here are read-only until that ships. */}
+                  performance videos yet — admin actions here are read-only until that ships. */}
               <NotAvailablePanel
                 feature="Administrative Actions"
-                reason="Feature/suspend/delete actions for freestyle videos are not implemented in the backend yet."
+                reason="Feature/suspend/delete actions for performance videos are not implemented in the backend yet."
               />
             </div>
           )}
