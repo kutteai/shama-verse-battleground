@@ -3,14 +3,14 @@ import { apiRequest } from "@/lib/apiClient"
 export interface DashboardSummary {
   total_users: number
   active_users: number
-  signups_this_week: number
+  new_signups: number
   active_last_24h: number
   total_challenges: number
   running_challenges: number
   completed_challenges: number
-  challenges_this_week: number
+  new_challenges: number
   total_videos: number
-  videos_this_week: number
+  new_videos: number
 }
 
 export interface TrendPoint {
@@ -24,8 +24,8 @@ export interface DashboardTrends {
   videos_created: TrendPoint[]
 }
 
-export function getDashboardSummary(): Promise<DashboardSummary> {
-  return apiRequest<DashboardSummary>("/api/v1/accounts/admin/dashboard/summary/")
+export function getDashboardSummary(days = 7): Promise<DashboardSummary> {
+  return apiRequest<DashboardSummary>(`/api/v1/accounts/admin/dashboard/summary/?days=${days}`)
 }
 
 export function getDashboardTrends(days = 30): Promise<DashboardTrends> {

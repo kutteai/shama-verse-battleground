@@ -1,5 +1,5 @@
 export const queryKeys = {
-  dashboardSummary: ["dashboard", "summary"] as const,
+  dashboardSummary: (days: number) => ["dashboard", "summary", days] as const,
   dashboardTrends: (days: number) => ["dashboard", "trends", days] as const,
   topFollowedUsers: ["following", "top-followed"] as const,
   followTrends: (days: number) => ["following", "trends", days] as const,
@@ -20,4 +20,10 @@ export const queryKeys = {
     ["challenges", status, challengeType, search, page] as const,
   challengeDetail: (id: string) => ["challenges", "detail", id] as const,
   notificationCampaigns: (page: number) => ["notifications", "campaigns", page] as const,
+  pagesAdmin: (page: number) => ["pages", "admin", page] as const,
+  pageViewsTrend: (days: number) => ["pages", "views-trend", days] as const,
+  videoImpressionsTrend: (days: number) => ["impressions", "videos", days] as const,
+  challengeImpressionsTrend: (days: number) => ["impressions", "challenges", days] as const,
+  topViewedVideos: ["impressions", "top-viewed-videos"] as const,
+  topViewedChallenges: ["impressions", "top-viewed-challenges"] as const,
 }

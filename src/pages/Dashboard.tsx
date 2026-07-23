@@ -32,13 +32,20 @@ const TIMEFRAME_DAYS: Record<string, number> = {
   month: 30,
 };
 
+const TIMEFRAME_LABEL: Record<string, string> = {
+  day: "Today",
+  week: "This Week",
+  month: "This Month",
+};
+
 const Dashboard = () => {
   const [timeframe, setTimeframe] = useState("week"); // 'day', 'week', 'month'
   const days = TIMEFRAME_DAYS[timeframe] ?? 7;
+  const periodLabel = TIMEFRAME_LABEL[timeframe] ?? "This Week";
 
   const summaryQuery = useQuery({
-    queryKey: queryKeys.dashboardSummary,
-    queryFn: getDashboardSummary,
+    queryKey: queryKeys.dashboardSummary(days),
+    queryFn: () => getDashboardSummary(days),
   });
 
   const trendsQuery = useQuery({
@@ -105,7 +112,7 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard title="Total Users" value={summary.total_users.toLocaleString()} icon={<Users size={24} />} />
           <StatCard title="Active Users" value={summary.active_users.toLocaleString()} icon={<Activity size={24} />} />
-          <StatCard title="New Users This Week" value={summary.signups_this_week.toLocaleString()} icon={<UserPlus size={24} />} />
+          <StatCard title={`New Users (${periodLabel})`} value={summary.new_signups.toLocaleString()} icon={<UserPlus size={24} />} />
           <StatCard title="Active Last 24h" value={summary.active_last_24h.toLocaleString()} icon={<Clock size={24} />} />
         </div>
 
@@ -114,7 +121,7 @@ const Dashboard = () => {
           <StatCard title="Total Challenges" value={summary.total_challenges.toLocaleString()} icon={<TrendingUp size={24} />} />
           <StatCard title="Running Challenges" value={summary.running_challenges.toLocaleString()} icon={<Calendar size={24} />} />
           <StatCard title="Total Videos" value={summary.total_videos.toLocaleString()} icon={<Video size={24} />} />
-          <StatCard title="Videos This Week" value={summary.videos_this_week.toLocaleString()} icon={<UploadCloud size={24} />} />
+          <StatCard title={`New Videos (${periodLabel})`} value={summary.new_videos.toLocaleString()} icon={<UploadCloud size={24} />} />
         </div>
 
         {/* Charts */}

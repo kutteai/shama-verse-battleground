@@ -29,6 +29,8 @@ import CreatorInsights from "./pages/admin/CreatorInsights";
 import UserBehavior from "./pages/admin/UserBehavior";
 import CommentManagement from "./pages/admin/CommentManagement";
 import SystemTools from "./pages/admin/SystemTools";
+import PagesManagement from "./pages/admin/PagesManagement";
+import ImpressionsAnalytics from "./pages/admin/ImpressionsAnalytics";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -156,7 +158,19 @@ const App = () => (
               <SystemTools />
             </ProtectedRoute>
           } />
-          
+
+          <Route path="/admin/pages" element={
+            <ProtectedRoute requireAdmin={true}>
+              <PagesManagement />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/impressions" element={
+            <ProtectedRoute requireAdmin={true}>
+              <ImpressionsAnalytics />
+            </ProtectedRoute>
+          } />
+
           {/* 404 route */}
           <Route path="*" element={<NotFound />} />
         </Routes>

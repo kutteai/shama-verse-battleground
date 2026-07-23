@@ -36,7 +36,9 @@ import {
   BarChart2,
   ShieldAlert,
   CircleDot,
-  CreditCard
+  CreditCard,
+  FileText,
+  Eye
 } from "lucide-react";
 
 export interface SidebarNavProps {
@@ -145,6 +147,23 @@ export default function DashboardLayout({
           href: "/admin/user-behavior",
           icon: <BarChart2 className="w-5 h-5" />,
           variant: location.pathname === "/admin/user-behavior" ? "default" : "ghost",
+        },
+        {
+          title: "Impressions",
+          href: "/admin/impressions",
+          icon: <Eye className="w-5 h-5" />,
+          variant: location.pathname === "/admin/impressions" ? "default" : "ghost",
+        },
+      ],
+    },
+    {
+      title: "Content Management",
+      items: [
+        {
+          title: "Pages",
+          href: "/admin/pages",
+          icon: <FileText className="w-5 h-5" />,
+          variant: location.pathname === "/admin/pages" ? "default" : "ghost",
         },
       ],
     },
@@ -339,6 +358,23 @@ function SidebarNav({ isOpen, onToggle }: SidebarNavProps) {
           href: "/admin/user-behavior",
           icon: <BarChart2 className="w-5 h-5" />,
           variant: location.pathname === "/admin/user-behavior" ? "default" : "ghost",
+        },
+        {
+          title: "Impressions",
+          href: "/admin/impressions",
+          icon: <Eye className="w-5 h-5" />,
+          variant: location.pathname === "/admin/impressions" ? "default" : "ghost",
+        },
+      ],
+    },
+    {
+      title: "Content Management",
+      items: [
+        {
+          title: "Pages",
+          href: "/admin/pages",
+          icon: <FileText className="w-5 h-5" />,
+          variant: location.pathname === "/admin/pages" ? "default" : "ghost",
         },
       ],
     },
