@@ -1,15 +1,17 @@
 import { apiRequest } from "@/lib/apiClient"
 
 export interface DashboardSummary {
+  // All-time — snapshots, don't move with the timeframe toggle.
   total_users: number
   active_users: number
-  new_signups: number
-  active_last_24h: number
   total_challenges: number
   running_challenges: number
   completed_challenges: number
-  new_challenges: number
   total_videos: number
+  // This period — windowed by `days`, moves with the timeframe toggle.
+  new_signups: number
+  active_in_period: number
+  new_challenges: number
   new_videos: number
 }
 

@@ -108,20 +108,27 @@ const Dashboard = () => {
           <TimeframeToggle timeframe={timeframe} setTimeframe={setTimeframe} />
         </div>
 
-        {/* Key Metrics Grid */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard title="Total Users" value={summary.total_users.toLocaleString()} icon={<Users size={24} />} />
-          <StatCard title="Active Users" value={summary.active_users.toLocaleString()} icon={<Activity size={24} />} />
-          <StatCard title={`New Users (${periodLabel})`} value={summary.new_signups.toLocaleString()} icon={<UserPlus size={24} />} />
-          <StatCard title="Active Last 24h" value={summary.active_last_24h.toLocaleString()} icon={<Clock size={24} />} />
+        {/* All Time — snapshots that don't move with the timeframe toggle */}
+        <div>
+          <h2 className="text-sm font-medium text-muted-foreground mb-2">All Time</h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            <StatCard title="Total Users" value={summary.total_users.toLocaleString()} icon={<Users size={24} />} />
+            <StatCard title="Active Users" value={summary.active_users.toLocaleString()} icon={<Activity size={24} />} />
+            <StatCard title="Total Challenges" value={summary.total_challenges.toLocaleString()} icon={<TrendingUp size={24} />} />
+            <StatCard title="Running Challenges" value={summary.running_challenges.toLocaleString()} icon={<Calendar size={24} />} />
+            <StatCard title="Total Videos" value={summary.total_videos.toLocaleString()} icon={<Video size={24} />} />
+          </div>
         </div>
 
-        {/* Secondary Metrics Grid */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard title="Total Challenges" value={summary.total_challenges.toLocaleString()} icon={<TrendingUp size={24} />} />
-          <StatCard title="Running Challenges" value={summary.running_challenges.toLocaleString()} icon={<Calendar size={24} />} />
-          <StatCard title="Total Videos" value={summary.total_videos.toLocaleString()} icon={<Video size={24} />} />
-          <StatCard title={`New Videos (${periodLabel})`} value={summary.new_videos.toLocaleString()} icon={<UploadCloud size={24} />} />
+        {/* This Period — everything here moves with the timeframe toggle */}
+        <div>
+          <h2 className="text-sm font-medium text-muted-foreground mb-2">{periodLabel}</h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard title={`New Users (${periodLabel})`} value={summary.new_signups.toLocaleString()} icon={<UserPlus size={24} />} />
+            <StatCard title={`Active Users (${periodLabel})`} value={summary.active_in_period.toLocaleString()} icon={<Clock size={24} />} />
+            <StatCard title={`New Challenges (${periodLabel})`} value={summary.new_challenges.toLocaleString()} icon={<TrendingUp size={24} />} />
+            <StatCard title={`New Videos (${periodLabel})`} value={summary.new_videos.toLocaleString()} icon={<UploadCloud size={24} />} />
+          </div>
         </div>
 
         {/* Charts */}
