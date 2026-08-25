@@ -15,6 +15,7 @@ import Challenges from "./pages/Challenges";
 import Freestyles from "./pages/Freestyles";
 import Reports from "./pages/Reports";
 import Transactions from "./pages/Transactions";
+import Orders from "./pages/Orders";
 import Notifications from "./pages/Notifications";
 import Withdrawals from "./pages/Withdrawals";
 import Settings from "./pages/Settings";
@@ -103,7 +104,13 @@ const App = () => (
               <Withdrawals />
             </ProtectedRoute>
           } />
-          
+
+          <Route path="/orders" element={
+            <ProtectedRoute requireAdmin={true}>
+              <Orders />
+            </ProtectedRoute>
+          } />
+
           <Route path="/notifications" element={
             <ProtectedRoute>
               <Notifications />

@@ -38,7 +38,8 @@ import {
   CircleDot,
   CreditCard,
   FileText,
-  Eye
+  Eye,
+  ShoppingBag
 } from "lucide-react";
 
 export interface SidebarNavProps {
@@ -123,6 +124,12 @@ export default function DashboardLayout({
       href: "/withdrawals",
       icon: <CreditCard className="w-5 h-5" />,
       variant: location.pathname === "/withdrawals" ? "default" : "ghost",
+    },
+    {
+      title: "Orders",
+      href: "/orders",
+      icon: <ShoppingBag className="w-5 h-5" />,
+      variant: location.pathname === "/orders" ? "default" : "ghost",
     },
     {
       title: "Notifications",
@@ -328,6 +335,12 @@ function SidebarNav({ isOpen, onToggle }: SidebarNavProps) {
       href: "/withdrawals",
       icon: <CreditCard className="w-5 h-5" />,
       variant: location.pathname === "/withdrawals" ? "default" : "ghost",
+    },
+    {
+      title: "Orders",
+      href: "/orders",
+      icon: <ShoppingBag className="w-5 h-5" />,
+      variant: location.pathname === "/orders" ? "default" : "ghost",
     },
     {
       title: "Notifications",

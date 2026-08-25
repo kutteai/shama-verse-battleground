@@ -21,6 +21,7 @@ export const queryKeys = {
   challengeDetail: (id: string) => ["challenges", "detail", id] as const,
   notificationCampaigns: (page: number) => ["notifications", "campaigns", page] as const,
   pagesAdmin: (page: number) => ["pages", "admin", page] as const,
+  orders: (page: number) => ["orders", page] as const,
   pageViewsTrend: (days: number) => ["pages", "views-trend", days] as const,
   videoImpressionsTrend: (days: number) => ["impressions", "videos", days] as const,
   challengeImpressionsTrend: (days: number) => ["impressions", "challenges", days] as const,
