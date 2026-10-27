@@ -32,4 +32,5 @@ export const queryKeys = {
   locationChallengeEvents: (location: string, isLive: string, search: string, page: number) =>
     ["location-challenges", "events", location, isLive, search, page] as const,
   locationChallengeEventDetail: (id: string) => ["location-challenges", "events", "detail", id] as const,
+  leaderboard: (metric: string, limit: number) => ["leaderboard", metric, limit] as const,
 }

@@ -34,6 +34,7 @@ import SystemTools from "./pages/admin/SystemTools";
 import PagesManagement from "./pages/admin/PagesManagement";
 import ImpressionsAnalytics from "./pages/admin/ImpressionsAnalytics";
 import LocationChallenges from "./pages/admin/LocationChallenges";
+import Leaderboards from "./pages/Leaderboards";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -189,6 +190,12 @@ const App = () => (
           <Route path="/admin/location-challenges" element={
             <ProtectedRoute requireAdmin={true}>
               <LocationChallenges />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/leaderboards" element={
+            <ProtectedRoute>
+              <Leaderboards />
             </ProtectedRoute>
           } />
 

@@ -40,7 +40,8 @@ import {
   FileText,
   Eye,
   ShoppingBag,
-  MapPin
+  MapPin,
+  Trophy
 } from "lucide-react";
 
 export interface SidebarNavProps {
@@ -429,6 +430,12 @@ function SidebarNav({ isOpen, onToggle }: SidebarNavProps) {
           href: "/admin/location-challenges",
           icon: <MapPin className="w-5 h-5" />,
           variant: location.pathname === "/admin/location-challenges" ? "default" : "ghost",
+        },
+        {
+          title: "Leaderboards",
+          href: "/leaderboards",
+          icon: <Trophy className="w-5 h-5" />,
+          variant: location.pathname === "/leaderboards" ? "default" : "ghost",
         },
       ],
     },
