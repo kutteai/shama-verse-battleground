@@ -21,6 +21,8 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import {
   Search,
   MoreHorizontal,
@@ -46,6 +48,8 @@ import {
   reactivateUser,
   warnUser,
   contactUser,
+  toggleUserOnboarding,
+  bulkSetUserOnboarding,
   type AccountStatus,
   type AdminUser,
 } from "@/lib/usersAdminApi";
@@ -87,6 +91,7 @@ const Users = () => {
   const [suspensionReason, setSuspensionReason] = useState("");
   const [contactSubject, setContactSubject] = useState("");
   const [contactMessage, setContactMessage] = useState("");
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   const queryClient = useQueryClient();
 
@@ -140,6 +145,23 @@ const Users = () => {
       setContactUserDialogOpen(false);
     },
     onError: (error: Error) => toast.error(error.message || "Failed to send message"),
+  });
+
+  const toggleOnboardingMutation = useMutation({
+    mutationFn: (userId: number) => toggleUserOnboarding(userId),
+    onSuccess: () => invalidateUsers(),
+    onError: (error: Error) => toast.error(error.message || "Failed to update onboarding status"),
+  });
+
+  const bulkOnboardingMutation = useMutation({
+    mutationFn: ({ userIds, value }: { userIds: number[]; value: boolean }) =>
+      bulkSetUserOnboarding(userIds, value),
+    onSuccess: (data) => {
+      toast.success(`${data.updated_count} user(s) updated`);
+      setSelectedIds([]);
+      invalidateUsers();
+    },
+    onError: (error: Error) => toast.error(error.message || "Failed to bulk-update onboarding status"),
   });
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -197,6 +219,21 @@ const Users = () => {
   };
 
   const results = usersQuery.data?.results ?? [];
+  const allOnPageSelected = results.length > 0 && results.every((u) => selectedIds.includes(u.id));
+
+  const toggleSelectAllOnPage = () => {
+    if (allOnPageSelected) {
+      setSelectedIds((prev) => prev.filter((id) => !results.some((u) => u.id === id)));
+    } else {
+      setSelectedIds((prev) => Array.from(new Set([...prev, ...results.map((u) => u.id)])));
+    }
+  };
+
+  const toggleSelectOne = (userId: number) => {
+    setSelectedIds((prev) =>
+      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
+    );
+  };
 
   return (
     <DashboardLayout>
@@ -245,6 +282,31 @@ const Users = () => {
               </Button>
             </div>
 
+            {selectedIds.length > 0 && (
+              <div className="flex items-center gap-3 mb-4 p-3 rounded-md border bg-muted/50">
+                <span className="text-sm font-medium">{selectedIds.length} selected</span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={bulkOnboardingMutation.isPending}
+                  onClick={() => bulkOnboardingMutation.mutate({ userIds: selectedIds, value: true })}
+                >
+                  Mark Onboarding Watched
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={bulkOnboardingMutation.isPending}
+                  onClick={() => bulkOnboardingMutation.mutate({ userIds: selectedIds, value: false })}
+                >
+                  Mark Onboarding Unwatched
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setSelectedIds([])}>
+                  Clear selection
+                </Button>
+              </div>
+            )}
+
             {usersQuery.isLoading ? (
               <div className="h-[200px] flex items-center justify-center text-muted-foreground">Loading...</div>
             ) : usersQuery.isError ? (
@@ -255,17 +317,32 @@ const Users = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-[40px]">
+                          <Checkbox
+                            checked={allOnPageSelected}
+                            onCheckedChange={toggleSelectAllOnPage}
+                            aria-label="Select all users on this page"
+                          />
+                        </TableHead>
                         <TableHead>Username</TableHead>
                         <TableHead>Email</TableHead>
                         <TableHead className="hidden md:table-cell">Followers</TableHead>
                         <TableHead className="hidden md:table-cell">Challenges</TableHead>
                         <TableHead>Status</TableHead>
+                        <TableHead>Onboarded</TableHead>
                         <TableHead className="w-[80px]">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {results.map((user) => (
                         <TableRow key={user.id}>
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedIds.includes(user.id)}
+                              onCheckedChange={() => toggleSelectOne(user.id)}
+                              aria-label={`Select ${user.username}`}
+                            />
+                          </TableCell>
                           <TableCell className="font-medium">
                             <div className="flex items-center gap-2">
                               <Avatar className="h-8 w-8">
@@ -285,6 +362,14 @@ const Users = () => {
                                 {user.account_status}
                               </Badge>
                             </div>
+                          </TableCell>
+                          <TableCell>
+                            <Switch
+                              checked={user.watch_onboarding}
+                              onCheckedChange={() => toggleOnboardingMutation.mutate(user.id)}
+                              disabled={toggleOnboardingMutation.isPending}
+                              aria-label={`Toggle onboarding watched for ${user.username}`}
+                            />
                           </TableCell>
                           <TableCell>
                             <DropdownMenu>

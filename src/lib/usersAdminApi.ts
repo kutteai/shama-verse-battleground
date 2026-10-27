@@ -12,6 +12,7 @@ export interface AdminUser {
   challenges_count: number
   account_status: AccountStatus
   is_active: boolean
+  watch_onboarding: boolean
   date_joined: string
 }
 
@@ -60,4 +61,23 @@ export function contactUser(userId: number, subject: string, message: string): P
     method: "POST",
     body: JSON.stringify({ subject, message }),
   })
+}
+
+export function toggleUserOnboarding(userId: number): Promise<{ watch_onboarding: boolean }> {
+  return apiRequest<{ watch_onboarding: boolean }>(`/api/v1/accounts/admin/users/${userId}/onboarding/`, {
+    method: "POST",
+  })
+}
+
+export function bulkSetUserOnboarding(
+  userIds: number[],
+  watchOnboarding: boolean
+): Promise<{ updated_count: number; watch_onboarding: boolean }> {
+  return apiRequest<{ updated_count: number; watch_onboarding: boolean }>(
+    `/api/v1/accounts/admin/users/bulk-onboarding/`,
+    {
+      method: "POST",
+      body: JSON.stringify({ user_ids: userIds, watch_onboarding: watchOnboarding }),
+    }
+  )
 }
