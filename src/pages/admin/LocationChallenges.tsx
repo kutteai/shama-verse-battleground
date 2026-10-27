@@ -357,7 +357,7 @@ const LocationChallenges = () => {
                 <div className="space-y-2">
                   <Label>Location</Label>
                   <Input
-                    placeholder="e.g. Lagos"
+                    placeholder="e.g. Boston"
                     value={locationInput}
                     onChange={(e) => setLocationInput(e.target.value)}
                   />
@@ -541,7 +541,7 @@ const LocationChallenges = () => {
               <Label htmlFor="event-location">Location</Label>
               <Input
                 id="event-location"
-                placeholder="e.g. Lagos"
+                placeholder="e.g. Boston"
                 value={form.location}
                 onChange={(e) => setForm({ ...form, location: e.target.value })}
               />
@@ -559,7 +559,7 @@ const LocationChallenges = () => {
               <Label htmlFor="event-title">Title</Label>
               <Input
                 id="event-title"
-                placeholder="e.g. Lagos Weekend Showdown"
+                placeholder="e.g. Boston Weekend Showdown"
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
               />
