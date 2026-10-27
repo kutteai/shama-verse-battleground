@@ -27,4 +27,7 @@ export const queryKeys = {
   challengeImpressionsTrend: (days: number) => ["impressions", "challenges", days] as const,
   topViewedVideos: ["impressions", "top-viewed-videos"] as const,
   topViewedChallenges: ["impressions", "top-viewed-challenges"] as const,
+  locationChallengeEvents: (location: string, isLive: string, search: string, page: number) =>
+    ["location-challenges", "events", location, isLive, search, page] as const,
+  locationChallengeEventDetail: (id: string) => ["location-challenges", "events", "detail", id] as const,
 }

@@ -39,7 +39,8 @@ import {
   CreditCard,
   FileText,
   Eye,
-  ShoppingBag
+  ShoppingBag,
+  MapPin
 } from "lucide-react";
 
 export interface SidebarNavProps {
@@ -417,6 +418,17 @@ function SidebarNav({ isOpen, onToggle }: SidebarNavProps) {
           href: "/admin/comments",
           icon: <MessageSquare className="w-5 h-5" />,
           variant: location.pathname === "/admin/comments" ? "default" : "ghost",
+        },
+      ],
+    },
+    {
+      title: "Challenges",
+      items: [
+        {
+          title: "Location Challenges",
+          href: "/admin/location-challenges",
+          icon: <MapPin className="w-5 h-5" />,
+          variant: location.pathname === "/admin/location-challenges" ? "default" : "ghost",
         },
       ],
     },

@@ -32,6 +32,7 @@ import CommentManagement from "./pages/admin/CommentManagement";
 import SystemTools from "./pages/admin/SystemTools";
 import PagesManagement from "./pages/admin/PagesManagement";
 import ImpressionsAnalytics from "./pages/admin/ImpressionsAnalytics";
+import LocationChallenges from "./pages/admin/LocationChallenges";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -175,6 +176,12 @@ const App = () => (
           <Route path="/admin/impressions" element={
             <ProtectedRoute requireAdmin={true}>
               <ImpressionsAnalytics />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/location-challenges" element={
+            <ProtectedRoute requireAdmin={true}>
+              <LocationChallenges />
             </ProtectedRoute>
           } />
 
