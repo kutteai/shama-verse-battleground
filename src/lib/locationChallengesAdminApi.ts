@@ -9,6 +9,7 @@ export interface LocationChallengeAdminUser {
 export interface LocationChallengeEvent {
   id: string
   location: string
+  tag: string | null
   title: string
   description: string | null
   starts_at: string
@@ -46,6 +47,7 @@ export interface PaginatedLocationChallengeEvents {
 
 export interface LocationChallengeEventPayload {
   location: string
+  tag?: string
   title: string
   description?: string
   starts_at: string

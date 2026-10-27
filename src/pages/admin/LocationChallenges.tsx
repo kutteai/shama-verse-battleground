@@ -98,6 +98,7 @@ const combineDatePart = (part: DatePart): string | null => {
 
 const EMPTY_FORM = {
   location: "",
+  tag: "",
   title: "",
   description: "",
   startsAt: { date: undefined, time: "09:00" } as DatePart,
@@ -260,6 +261,7 @@ const LocationChallenges = () => {
     setEditingEvent(ev);
     setForm({
       location: ev.location,
+      tag: ev.tag ?? "",
       title: ev.title,
       description: ev.description ?? "",
       startsAt: toDatePart(ev.starts_at),
@@ -286,6 +288,7 @@ const LocationChallenges = () => {
 
     const payload: LocationChallengeEventPayload = {
       location: form.location.trim(),
+      tag: form.tag.trim() || undefined,
       title: form.title.trim(),
       description: form.description.trim() || undefined,
       starts_at: startsAtIso,
@@ -439,7 +442,14 @@ const LocationChallenges = () => {
                     events.map((ev) => (
                       <TableRow key={ev.id}>
                         <TableCell className="font-medium max-w-[200px] truncate">{ev.title}</TableCell>
-                        <TableCell className="text-sm">{ev.location}</TableCell>
+                        <TableCell className="text-sm">
+                          {ev.location}
+                          {ev.tag && (
+                            <Badge variant="outline" className="ml-2 font-mono text-xs">
+                              {ev.tag}
+                            </Badge>
+                          )}
+                        </TableCell>
                         <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                           {formatDateTime(ev.starts_at)} &rarr; {formatDateTime(ev.ends_at)}
                         </TableCell>
@@ -537,6 +547,15 @@ const LocationChallenges = () => {
               />
             </div>
             <div className="space-y-2">
+              <Label htmlFor="event-tag">Tag (optional)</Label>
+              <Input
+                id="event-tag"
+                placeholder="Short code shown on qualifying users, e.g. USVI — falls back to location if left blank"
+                value={form.tag}
+                onChange={(e) => setForm({ ...form, tag: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="event-title">Title</Label>
               <Input
                 id="event-title"
@@ -630,6 +649,12 @@ const LocationChallenges = () => {
             <div className="space-y-6">
               <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                 <span>Location: <strong className="text-foreground">{detailQuery.data.event.location}</strong></span>
+                {detailQuery.data.event.tag && (
+                  <>
+                    <span>·</span>
+                    <span>Tag: <strong className="text-foreground font-mono">{detailQuery.data.event.tag}</strong></span>
+                  </>
+                )}
                 <span>·</span>
                 <span>
                   Window: <strong className="text-foreground">
