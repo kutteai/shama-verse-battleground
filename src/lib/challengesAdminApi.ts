@@ -76,12 +76,14 @@ export function getChallenges(params: {
   challenge_type?: number
   search?: string
   page?: number
+  user_id?: number
 } = {}): Promise<PaginatedChallenges> {
   const query = new URLSearchParams()
   if (params.status != null) query.set("status", String(params.status))
   if (params.challenge_type != null) query.set("challenge_type", String(params.challenge_type))
   if (params.search) query.set("search", params.search)
   if (params.page && params.page > 1) query.set("page", String(params.page))
+  if (params.user_id != null) query.set("user_id", String(params.user_id))
   return apiRequest<PaginatedChallenges>(
     `/api/v1/challenge/admin/challenges/?${query.toString()}`
   )

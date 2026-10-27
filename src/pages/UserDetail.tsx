@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useRef, useState } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -19,7 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Mail, AlertCircle, Ban, RotateCcw } from "lucide-react";
+import { ArrowLeft, Mail, AlertCircle, Ban, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   getUserDetail,
   suspendUser,
@@ -29,6 +37,7 @@ import {
   toggleUserOnboarding,
   type AccountStatus,
 } from "@/lib/usersAdminApi";
+import { getChallenges, CHALLENGE_STATUS } from "@/lib/challengesAdminApi";
 import { queryKeys } from "@/lib/queryKeys";
 
 const getStatusColor = (status: AccountStatus) => {
@@ -44,12 +53,27 @@ const getStatusColor = (status: AccountStatus) => {
   }
 };
 
-function StatCard({ label, value }: { label: string; value: string | number }) {
+function StatCard({
+  label,
+  value,
+  onClick,
+}: {
+  label: string;
+  value: string | number;
+  onClick?: () => void;
+}) {
+  const Comp = onClick ? "button" : "div";
   return (
-    <div className="p-4 rounded-md bg-muted flex flex-col items-center justify-center">
+    <Comp
+      type={onClick ? "button" : undefined}
+      onClick={onClick}
+      className={`p-4 rounded-md bg-muted flex flex-col items-center justify-center w-full ${
+        onClick ? "hover:bg-muted/70 transition-colors cursor-pointer" : ""
+      }`}
+    >
       <span className="text-2xl font-bold">{value}</span>
       <span className="text-sm text-muted-foreground">{label}</span>
-    </div>
+    </Comp>
   );
 }
 
@@ -76,12 +100,24 @@ export default function UserDetail() {
   const [contactMessage, setContactMessage] = useState("");
   const [warningMessage, setWarningMessage] = useState("");
   const [suspensionReason, setSuspensionReason] = useState("");
+  const [challengesPage, setChallengesPage] = useState(1);
+  const challengesSectionRef = useRef<HTMLDivElement>(null);
 
   const userQuery = useQuery({
     queryKey: queryKeys.userDetail(id),
     queryFn: () => getUserDetail(id),
     enabled: Number.isFinite(id),
   });
+
+  const challengesQuery = useQuery({
+    queryKey: queryKeys.userChallenges(id, challengesPage),
+    queryFn: () => getChallenges({ user_id: id, page: challengesPage }),
+    enabled: Number.isFinite(id),
+  });
+
+  const scrollToChallenges = () => {
+    challengesSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: queryKeys.userDetail(id) });
 
@@ -185,7 +221,7 @@ export default function UserDetail() {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
                   <StatCard label="Followers" value={user.followers_count.toLocaleString()} />
                   <StatCard label="Following" value={user.following_count.toLocaleString()} />
-                  <StatCard label="Challenges" value={user.challenges_count} />
+                  <StatCard label="Challenges" value={user.challenges_count} onClick={scrollToChallenges} />
                   <StatCard label="Votes" value={user.votes_count} />
                 </div>
 
@@ -276,6 +312,85 @@ export default function UserDetail() {
                 </Badge>
               </CardContent>
             </Card>
+
+            <div ref={challengesSectionRef} className="scroll-mt-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Recent Challenges</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {challengesQuery.isLoading ? (
+                    <div className="h-24 flex items-center justify-center text-muted-foreground">Loading...</div>
+                  ) : challengesQuery.isError ? (
+                    <p className="text-sm text-destructive">Failed to load challenges.</p>
+                  ) : challengesQuery.data && challengesQuery.data.results.length > 0 ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Title</TableHead>
+                          <TableHead>Opponent</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Created</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {challengesQuery.data.results.map((ch) => {
+                          const opponent = ch.challenger.id === id ? ch.challengee : ch.challenger;
+                          return (
+                            <TableRow key={ch.id}>
+                              <TableCell className="font-medium max-w-[200px] truncate">{ch.title}</TableCell>
+                              <TableCell>
+                                <Link to={`/users/${opponent.id}`} className="text-blue-600 hover:underline">
+                                  {opponent.username}
+                                </Link>
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="outline">{CHALLENGE_STATUS[ch.status] ?? ch.status_display}</Badge>
+                              </TableCell>
+                              <TableCell className="text-sm text-muted-foreground">
+                                {ch.challenge_type_display}
+                              </TableCell>
+                              <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                                {new Date(ch.created_at).toLocaleDateString()}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <p className="text-sm text-muted-foreground py-6 text-center">No challenges yet.</p>
+                  )}
+                </CardContent>
+                {challengesQuery.data && challengesQuery.data.results.length > 0 && (
+                  <CardFooter className="flex items-center justify-between">
+                    <p className="text-sm text-muted-foreground">
+                      Showing <strong>{challengesQuery.data.results.length}</strong> of{" "}
+                      <strong>{challengesQuery.data.count}</strong>
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={!challengesQuery.data.previous}
+                        onClick={() => setChallengesPage((p) => Math.max(1, p - 1))}
+                      >
+                        <ChevronLeft size={16} className="mr-1" /> Previous
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={!challengesQuery.data.next}
+                        onClick={() => setChallengesPage((p) => p + 1)}
+                      >
+                        Next <ChevronRight size={16} className="ml-1" />
+                      </Button>
+                    </div>
+                  </CardFooter>
+                )}
+              </Card>
+            </div>
           </>
         )}
       </div>
