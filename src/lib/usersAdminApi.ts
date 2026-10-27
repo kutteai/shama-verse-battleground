@@ -16,6 +16,27 @@ export interface AdminUser {
   date_joined: string
 }
 
+export interface AdminUserDetail extends AdminUser {
+  dob: string | null
+  gender: number | null
+  location: string | null
+  about_me: string | null
+  inspiration: string | null
+  hobby: string | null
+  fun_fact: string | null
+  profile_video: string | null
+  is_admin: boolean
+  is_verified: boolean
+  community_rules: boolean
+  content_disclaimer: boolean
+  account_balance: string
+  following_count: number
+  likes_count: number
+  votes_count: number
+  location_challenge_tags: string[]
+  last_active: string | null
+}
+
 export interface PaginatedResponse<T> {
   count: number
   next: string | null
@@ -34,6 +55,10 @@ export function getUsers(params: {
   if (params.page && params.page > 1) query.set("page", String(params.page))
   const qs = query.toString()
   return apiRequest<PaginatedResponse<AdminUser>>(`/api/v1/accounts/admin/users/${qs ? `?${qs}` : ""}`)
+}
+
+export function getUserDetail(userId: number): Promise<AdminUserDetail> {
+  return apiRequest<AdminUserDetail>(`/api/v1/accounts/admin/users/${userId}/`)
 }
 
 export function suspendUser(userId: number, reason: string): Promise<AdminUser> {

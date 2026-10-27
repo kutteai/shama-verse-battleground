@@ -10,6 +10,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Users from "./pages/Users";
+import UserDetail from "./pages/UserDetail";
 import Gifts from "./pages/Gifts";
 import Challenges from "./pages/Challenges";
 import Freestyles from "./pages/Freestyles";
@@ -69,7 +70,13 @@ const App = () => (
               <Users />
             </ProtectedRoute>
           } />
-          
+
+          <Route path="/users/:userId" element={
+            <ProtectedRoute>
+              <UserDetail />
+            </ProtectedRoute>
+          } />
+
           <Route path="/gifts" element={
             <ProtectedRoute>
               <Gifts />

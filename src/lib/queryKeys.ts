@@ -9,6 +9,7 @@ export const queryKeys = {
   moderationLogs: (search: string) => ["moderation-logs", search] as const,
   adminProfile: ["admin", "profile"] as const,
   users: (search: string, accountStatus: string, page: number) => ["users", search, accountStatus, page] as const,
+  userDetail: (id: number) => ["users", "detail", id] as const,
   commentModeration: (search: string) => ["comments", "moderation", search] as const,
   userSegments: ["user-behavior", "segments"] as const,
   creatorInsights: (search: string, sortBy: string, page: number) =>

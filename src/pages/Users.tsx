@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Input } from "@/components/ui/input";
@@ -81,7 +82,6 @@ const Users = () => {
   const [statusFilter, setStatusFilter] = useState<AccountStatus | "all">("all");
   const [page, setPage] = useState(1);
 
-  const [userDetailsDialogOpen, setUserDetailsDialogOpen] = useState(false);
   const [contactUserDialogOpen, setContactUserDialogOpen] = useState(false);
   const [warnUserDialogOpen, setWarnUserDialogOpen] = useState(false);
   const [suspendUserDialogOpen, setSuspendUserDialogOpen] = useState(false);
@@ -93,6 +93,7 @@ const Users = () => {
   const [contactMessage, setContactMessage] = useState("");
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const usersQuery = useQuery({
@@ -171,8 +172,7 @@ const Users = () => {
   };
 
   const handleViewProfile = (user: AdminUser) => {
-    setSelectedUser(user);
-    setUserDetailsDialogOpen(true);
+    navigate(`/users/${user.id}`);
   };
 
   const handleContactUser = (user: AdminUser) => {
@@ -483,98 +483,6 @@ const Users = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* User Details Dialog */}
-      {selectedUser && (
-        <Dialog open={userDetailsDialogOpen} onOpenChange={setUserDetailsDialogOpen}>
-          <DialogContent className="sm:max-w-[550px]">
-            <DialogHeader>
-              <DialogTitle>User Profile</DialogTitle>
-              <DialogDescription>
-                Detailed information about this user.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="py-4">
-              <div className="flex items-start gap-4">
-                <Avatar className="h-20 w-20 border-2 border-primary">
-                  <AvatarImage src={selectedUser.profile_pic ?? undefined} alt={selectedUser.username} />
-                  <AvatarFallback className="text-lg">{selectedUser.username.charAt(0).toUpperCase()}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <h2 className="text-xl font-bold">{selectedUser.username}</h2>
-                  <div className="flex items-center mt-1">
-                    <span className={`h-2 w-2 rounded-full ${getStatusColor(selectedUser.account_status)} mr-2`}></span>
-                    <Badge variant="outline" className="capitalize">
-                      {selectedUser.account_status}
-                    </Badge>
-                  </div>
-                  <div className="mt-3 space-y-1">
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
-                      <a href={`mailto:${selectedUser.email}`} className="text-blue-600 hover:underline">
-                        {selectedUser.email}
-                      </a>
-                    </div>
-                    {selectedUser.phone && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span>{selectedUser.phone}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 mt-6">
-                <div className="p-4 rounded-md bg-muted flex flex-col items-center justify-center">
-                  <span className="text-2xl font-bold">{selectedUser.followers_count.toLocaleString()}</span>
-                  <span className="text-sm text-muted-foreground">Followers</span>
-                </div>
-                <div className="p-4 rounded-md bg-muted flex flex-col items-center justify-center">
-                  <span className="text-2xl font-bold">{selectedUser.challenges_count}</span>
-                  <span className="text-sm text-muted-foreground">Challenges</span>
-                </div>
-              </div>
-
-              <div className="mt-6 space-y-4">
-                <h3 className="font-medium">Account Actions</h3>
-                <div className="flex flex-wrap gap-2">
-                  <Button variant="outline" className="flex items-center gap-2" onClick={() => {
-                    setUserDetailsDialogOpen(false);
-                    setTimeout(() => handleContactUser(selectedUser), 100);
-                  }}>
-                    <Mail className="h-4 w-4" />
-                    <span>Contact</span>
-                  </Button>
-                  <Button variant="outline" className="flex items-center gap-2 text-amber-500" onClick={() => {
-                    setUserDetailsDialogOpen(false);
-                    setTimeout(() => handleWarnUser(selectedUser), 100);
-                  }}>
-                    <AlertCircle className="h-4 w-4" />
-                    <span>Warn</span>
-                  </Button>
-                  {selectedUser.account_status === "suspended" ? (
-                    <Button variant="outline" className="flex items-center gap-2 text-green-600" onClick={() => {
-                      reactivateMutation.mutate(selectedUser.id);
-                      setUserDetailsDialogOpen(false);
-                    }}>
-                      <RotateCcw className="h-4 w-4" />
-                      <span>Reactivate</span>
-                    </Button>
-                  ) : (
-                    <Button variant="outline" className="flex items-center gap-2 text-red-500" onClick={() => {
-                      setUserDetailsDialogOpen(false);
-                      setTimeout(() => handleSuspendAccount(selectedUser), 100);
-                    }}>
-                      <Ban className="h-4 w-4" />
-                      <span>Suspend</span>
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
 
       {/* Contact User Dialog */}
       {selectedUser && (
