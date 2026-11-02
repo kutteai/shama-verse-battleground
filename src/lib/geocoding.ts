@@ -1,6 +1,7 @@
-// Address search via OpenStreetMap Nominatim (free, no API key). Its usage
-// policy allows light interactive use like this admin form: at most ~1
-// request/second, which the picker's 500 ms debounce respects.
+// Address search via OpenStreetMap Nominatim (free, no API key). Usage
+// policy (https://operations.osmfoundation.org/policies/nominatim/): at most
+// 1 request/second and no search-as-you-type autocomplete — so the picker only
+// searches when the admin presses Enter or clicks Search.
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org"
 
 export interface GeocodeResult {

@@ -6,6 +6,7 @@ import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 import { Loader2, MapPin, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -98,29 +99,27 @@ const GeofencePicker = ({ value, onChange, onPlaceName }: GeofencePickerProps) =
   useEffect(() => setLngText(value.longitude?.toString() ?? ""), [value.longitude]);
   useEffect(() => setRadiusText(String(value.radiusMeters)), [value.radiusMeters]);
 
-  // Debounced address autocomplete.
-  useEffect(() => {
+  const [searchError, setSearchError] = useState<string | null>(null);
+
+  // Explicit search (Enter / button) only: Nominatim's usage policy forbids
+  // client-side search-as-you-type autocomplete.
+  const runSearch = async () => {
     const q = query.trim();
-    if (!showResults || q.length < 3 || q === value.address) {
+    if (q.length < 3 || searching) return;
+    setSearching(true);
+    setSearchError(null);
+    try {
+      const found = await searchAddress(q);
+      setResults(found);
+      setShowResults(true);
+      if (found.length === 0) setSearchError("No places found. Try a fuller address.");
+    } catch {
       setResults([]);
-      return;
+      setSearchError("Address search failed. Try again, or place the pin on the map.");
+    } finally {
+      setSearching(false);
     }
-    const controller = new AbortController();
-    const t = setTimeout(async () => {
-      setSearching(true);
-      try {
-        setResults(await searchAddress(q, controller.signal));
-      } catch {
-        if (!controller.signal.aborted) setResults([]);
-      } finally {
-        if (!controller.signal.aborted) setSearching(false);
-      }
-    }, 500);
-    return () => {
-      clearTimeout(t);
-      controller.abort();
-    };
-  }, [query, showResults, value.address]);
+  };
 
   const update = (patch: Partial<Geofence>) => onChange({ ...valueRef.current, ...patch });
 
@@ -192,24 +191,40 @@ const GeofencePicker = ({ value, onChange, onPlaceName }: GeofencePickerProps) =
           <div className="space-y-2">
             <Label htmlFor="geofence-address">Address</Label>
             <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="geofence-address"
-                className="pl-8"
-                placeholder="Type an address or place, e.g. Boston Common"
-                value={query}
-                autoComplete="off"
-                onChange={(e) => {
-                  setQuery(e.target.value);
-                  setShowResults(true);
-                  update({ address: e.target.value });
-                }}
-                onFocus={() => setShowResults(true)}
-                onBlur={() => setTimeout(() => setShowResults(false), 150)}
-              />
-              {searching && (
-                <Loader2 className="absolute right-2.5 top-2.5 h-4 w-4 animate-spin text-muted-foreground" />
-              )}
+              <div className="flex gap-2">
+                <Input
+                  id="geofence-address"
+                  placeholder="Type an address or place, e.g. Boston Common, then press Enter"
+                  value={query}
+                  autoComplete="off"
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    setShowResults(false);
+                    setSearchError(null);
+                    update({ address: e.target.value });
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      runSearch();
+                    }
+                  }}
+                  onBlur={() => setTimeout(() => setShowResults(false), 150)}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={runSearch}
+                  disabled={searching || query.trim().length < 3}
+                >
+                  {searching ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Search className="h-4 w-4" />
+                  )}
+                  <span className="ml-1.5">Search</span>
+                </Button>
+              </div>
               {showResults && results.length > 0 && (
                 <ul className="absolute z-[1000] mt-1 w-full max-h-60 overflow-y-auto rounded-md border bg-popover text-popover-foreground shadow-md">
                   {results.map((r) => (
@@ -227,6 +242,7 @@ const GeofencePicker = ({ value, onChange, onPlaceName }: GeofencePickerProps) =
                 </ul>
               )}
             </div>
+            {searchError && <p className="text-xs text-destructive">{searchError}</p>}
           </div>
 
           <div className="h-64 w-full overflow-hidden rounded-md border isolate">
