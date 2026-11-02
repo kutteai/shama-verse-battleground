@@ -65,6 +65,8 @@ import {
   type LocationChallengeEventPayload,
 } from "@/lib/locationChallengesAdminApi";
 import { queryKeys } from "@/lib/queryKeys";
+import GeofencePicker, { GeofencePreview } from "@/components/location/GeofencePicker";
+import { EMPTY_GEOFENCE, formatRadius, type Geofence } from "@/components/location/geofence";
 
 const formatDateTime = (iso: string) =>
   new Intl.DateTimeFormat("en-US", {
@@ -103,7 +105,22 @@ const EMPTY_FORM = {
   description: "",
   startsAt: { date: undefined, time: "09:00" } as DatePart,
   endsAt: { date: undefined, time: "17:00" } as DatePart,
+  geofence: EMPTY_GEOFENCE as Geofence,
 };
+
+const hasGeofence = (ev: LocationChallengeEvent) =>
+  ev.center_latitude != null && ev.center_longitude != null && ev.radius_meters != null;
+
+const geofenceFromEvent = (ev: LocationChallengeEvent): Geofence =>
+  hasGeofence(ev)
+    ? {
+        enabled: true,
+        address: ev.address ?? "",
+        latitude: Number(ev.center_latitude),
+        longitude: Number(ev.center_longitude),
+        radiusMeters: Number(ev.radius_meters),
+      }
+    : { ...EMPTY_GEOFENCE, address: ev.address ?? "" };
 
 const DateTimeField = ({
   label,
@@ -266,6 +283,7 @@ const LocationChallenges = () => {
       description: ev.description ?? "",
       startsAt: toDatePart(ev.starts_at),
       endsAt: toDatePart(ev.ends_at),
+      geofence: geofenceFromEvent(ev),
     });
     setDialogOpen(true);
   };
@@ -285,6 +303,11 @@ const LocationChallenges = () => {
       toast.error("End time must be after start time.");
       return;
     }
+    const { geofence } = form;
+    if (geofence.enabled && (geofence.latitude == null || geofence.longitude == null)) {
+      toast.error("Place the geofence center: search an address, click the map, or type coordinates.");
+      return;
+    }
 
     const payload: LocationChallengeEventPayload = {
       location: form.location.trim(),
@@ -293,6 +316,11 @@ const LocationChallenges = () => {
       description: form.description.trim() || undefined,
       starts_at: startsAtIso,
       ends_at: endsAtIso,
+      // Turning the geofence off sends nulls, which removes it on edit.
+      address: geofence.enabled ? geofence.address.trim() || null : null,
+      center_latitude: geofence.enabled ? geofence.latitude : null,
+      center_longitude: geofence.enabled ? geofence.longitude : null,
+      radius_meters: geofence.enabled ? geofence.radiusMeters : null,
     };
 
     if (editingEvent) {
@@ -449,6 +477,12 @@ const LocationChallenges = () => {
                               {ev.tag}
                             </Badge>
                           )}
+                          {hasGeofence(ev) && (
+                            <Badge variant="secondary" className="ml-2 text-xs" title={ev.address ?? undefined}>
+                              <MapPin className="h-3 w-3 mr-1" />
+                              {formatRadius(Number(ev.radius_meters))}
+                            </Badge>
+                          )}
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                           {formatDateTime(ev.starts_at)} &rarr; {formatDateTime(ev.ends_at)}
@@ -529,11 +563,11 @@ const LocationChallenges = () => {
 
       {/* Create / Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[640px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingEvent ? "Edit Event" : "Create Event"}</DialogTitle>
             <DialogDescription>
-              While live, users in this location can only challenge other users in the same location.
+              While live, users in this event's area can only challenge other users in the same area.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
@@ -545,7 +579,17 @@ const LocationChallenges = () => {
                 value={form.location}
                 onChange={(e) => setForm({ ...form, location: e.target.value })}
               />
+              <p className="text-xs text-muted-foreground">
+                Event name for the area. Users without GPS are matched by their typed location against this.
+              </p>
             </div>
+            <GeofencePicker
+              value={form.geofence}
+              onChange={(geofence) => setForm((f) => ({ ...f, geofence }))}
+              onPlaceName={(name) =>
+                setForm((f) => (f.location.trim() ? f : { ...f, location: name }))
+              }
+            />
             <div className="space-y-2">
               <Label htmlFor="event-tag">Tag (optional)</Label>
               <Input
@@ -667,13 +711,29 @@ const LocationChallenges = () => {
                     <span>Ended: <strong className="text-foreground">{formatDateTime(detailQuery.data.event.ended_at)}</strong></span>
                   </>
                 )}
-                {detailQuery.data.event.created_by && (
+                {detailQuery.data.event.created_by_username && (
                   <>
                     <span>·</span>
-                    <span>Created by: <strong className="text-foreground">@{detailQuery.data.event.created_by.username}</strong></span>
+                    <span>Created by: <strong className="text-foreground">@{detailQuery.data.event.created_by_username}</strong></span>
                   </>
                 )}
               </div>
+
+              {hasGeofence(detailQuery.data.event) && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Geofence · {formatRadius(Number(detailQuery.data.event.radius_meters))} radius
+                  </p>
+                  {detailQuery.data.event.address && (
+                    <p className="text-sm">{detailQuery.data.event.address}</p>
+                  )}
+                  <GeofencePreview
+                    latitude={Number(detailQuery.data.event.center_latitude)}
+                    longitude={Number(detailQuery.data.event.center_longitude)}
+                    radiusMeters={Number(detailQuery.data.event.radius_meters)}
+                  />
+                </div>
+              )}
 
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">

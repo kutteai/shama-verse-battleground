@@ -9,6 +9,11 @@ export interface LocationChallengeAdminUser {
 export interface LocationChallengeEvent {
   id: string
   location: string
+  /** Geofence: all three of center_latitude/center_longitude/radius_meters are set, or all null. */
+  address: string | null
+  center_latitude: number | null
+  center_longitude: number | null
+  radius_meters: number | null
   tag: string | null
   title: string
   description: string | null
@@ -18,7 +23,8 @@ export interface LocationChallengeEvent {
   is_live: boolean
   ended_at: string | null
   completion_email_sent: boolean
-  created_by: { id: number; username: string } | null
+  created_by: number | null
+  created_by_username: string | null
   created_at: string
   updated_at: string
 }
@@ -47,6 +53,10 @@ export interface PaginatedLocationChallengeEvents {
 
 export interface LocationChallengeEventPayload {
   location: string
+  address?: string | null
+  center_latitude?: number | null
+  center_longitude?: number | null
+  radius_meters?: number | null
   tag?: string
   title: string
   description?: string
