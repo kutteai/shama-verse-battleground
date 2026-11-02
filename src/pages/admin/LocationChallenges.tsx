@@ -68,6 +68,8 @@ import { queryKeys } from "@/lib/queryKeys";
 import GeofencePicker, { GeofencePreview } from "@/components/location/GeofencePicker";
 import { EMPTY_GEOFENCE, formatRadius, type Geofence } from "@/components/location/geofence";
 import EventBrandingFields, { type EventBranding } from "@/components/location/EventBrandingFields";
+import InstructionsEditor, { type InstructionDraft } from "@/components/location/InstructionsEditor";
+import RichTextEditor from "@/components/location/RichTextEditor";
 
 const formatDateTime = (iso: string) =>
   new Intl.DateTimeFormat("en-US", {
@@ -108,6 +110,8 @@ const EMPTY_FORM = {
   endsAt: { date: undefined, time: "17:00" } as DatePart,
   geofence: EMPTY_GEOFENCE as Geofence,
   branding: { themeColor: "", iconUrl: "", imageUrl: "", bannerUrl: "" } as EventBranding,
+  instructions: [] as InstructionDraft[],
+  rules: "",
 };
 
 const HEX_COLOR = /^#[0-9A-Fa-f]{6}$/;
@@ -294,6 +298,10 @@ const LocationChallenges = () => {
         imageUrl: ev.image_url ?? "",
         bannerUrl: ev.banner_url ?? "",
       },
+      instructions: [...(ev.instructions ?? [])]
+        .sort((a, b) => a.sort_order - b.sort_order)
+        .map((i) => ({ key: i.id, text: i.text, iconUrl: i.icon_url ?? "" })),
+      rules: ev.rules ?? "",
     });
     setDialogOpen(true);
   };
@@ -314,6 +322,12 @@ const LocationChallenges = () => {
       return;
     }
     const { geofence, branding } = form;
+    // Blank rows are ignored; a row with an icon still needs text.
+    const instructions = form.instructions.filter((i) => i.text.trim() || i.iconUrl);
+    if (instructions.some((i) => !i.text.trim())) {
+      toast.error("Each instruction needs text.");
+      return;
+    }
     if (branding.themeColor && !HEX_COLOR.test(branding.themeColor)) {
       toast.error("Theme color must be a 6-digit hex color like #2563EB.");
       return;
@@ -340,6 +354,13 @@ const LocationChallenges = () => {
       icon_url: branding.iconUrl || null,
       image_url: branding.imageUrl || null,
       banner_url: branding.bannerUrl || null,
+      rules: form.rules || null,
+      // Sent as one ordered list; it replaces the event's existing instructions.
+      instructions: instructions.map((i, index) => ({
+        text: i.text.trim(),
+        icon_url: i.iconUrl || null,
+        sort_order: index,
+      })),
     };
 
     if (editingEvent) {
@@ -606,7 +627,7 @@ const LocationChallenges = () => {
 
       {/* Create / Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-[640px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[720px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingEvent ? "Edit Event" : "Create Event"}</DialogTitle>
             <DialogDescription>
@@ -664,6 +685,21 @@ const LocationChallenges = () => {
               value={form.branding}
               onChange={(branding) => setForm((f) => ({ ...f, branding }))}
             />
+            <InstructionsEditor
+              value={form.instructions}
+              onChange={(instructions) => setForm((f) => ({ ...f, instructions }))}
+            />
+            <div className="space-y-2">
+              <Label>Rules</Label>
+              <RichTextEditor
+                value={form.rules}
+                onChange={(rules) => setForm((f) => ({ ...f, rules }))}
+                placeholder="Write the event rules: eligibility, scoring, conduct…"
+              />
+              <p className="text-xs text-muted-foreground">
+                Formatting, lists and links are kept; anything else is removed when saved.
+              </p>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <DateTimeField
                 label="Starts At"
@@ -817,6 +853,44 @@ const LocationChallenges = () => {
                     latitude={Number(detailQuery.data.event.center_latitude)}
                     longitude={Number(detailQuery.data.event.center_longitude)}
                     radiusMeters={Number(detailQuery.data.event.radius_meters)}
+                  />
+                </div>
+              )}
+
+              {detailQuery.data.event.instructions?.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Instructions
+                  </p>
+                  <ol className="space-y-2">
+                    {[...detailQuery.data.event.instructions]
+                      .sort((a, b) => a.sort_order - b.sort_order)
+                      .map((step, index) => (
+                        <li key={step.id} className="flex items-center gap-3 text-sm">
+                          <span className="w-5 text-center text-xs font-semibold text-muted-foreground">
+                            {index + 1}
+                          </span>
+                          {step.icon_url ? (
+                            <img src={step.icon_url} alt="" className="h-8 w-8 rounded-md border object-cover" />
+                          ) : (
+                            <span className="h-8 w-8 rounded-md border bg-muted" />
+                          )}
+                          <span>{step.text}</span>
+                        </li>
+                      ))}
+                  </ol>
+                </div>
+              )}
+
+              {detailQuery.data.event.rules && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Rules
+                  </p>
+                  {/* Sanitized server-side (nh3) before it is stored. */}
+                  <div
+                    className="prose prose-sm dark:prose-invert max-w-none rounded-md border p-3"
+                    dangerouslySetInnerHTML={{ __html: detailQuery.data.event.rules }}
                   />
                 </div>
               )}

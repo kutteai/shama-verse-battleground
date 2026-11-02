@@ -27,6 +27,7 @@ const MAX_BYTES: Record<EventImageKind, number> = {
   icon: 2 * 1024 * 1024,
   image: 10 * 1024 * 1024,
   banner: 10 * 1024 * 1024,
+  instruction_icon: 2 * 1024 * 1024,
 };
 
 const ImageUploadField = ({

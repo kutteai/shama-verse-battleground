@@ -19,6 +19,9 @@ export interface LocationChallengeEvent {
   icon_url: string | null
   image_url: string | null
   banner_url: string | null
+  /** Sanitized HTML from the rules editor. */
+  rules: string | null
+  instructions: LocationChallengeInstruction[]
   tag: string | null
   title: string
   description: string | null
@@ -32,6 +35,20 @@ export interface LocationChallengeEvent {
   created_by_username: string | null
   created_at: string
   updated_at: string
+}
+
+export interface LocationChallengeInstruction {
+  id: string
+  text: string
+  icon_url: string | null
+  /** Lower shows first. */
+  sort_order: number
+}
+
+export interface LocationChallengeInstructionPayload {
+  text: string
+  icon_url?: string | null
+  sort_order?: number
 }
 
 export interface LocationChallengeLedgerEntry {
@@ -66,6 +83,9 @@ export interface LocationChallengeEventPayload {
   icon_url?: string | null
   image_url?: string | null
   banner_url?: string | null
+  rules?: string | null
+  /** Replaces the event's whole instruction list when sent. */
+  instructions?: LocationChallengeInstructionPayload[]
   tag?: string
   title: string
   description?: string
@@ -127,7 +147,7 @@ export function endEvent(eventId: string, reason?: string): Promise<LocationChal
   })
 }
 
-export type EventImageKind = "icon" | "image" | "banner"
+export type EventImageKind = "icon" | "image" | "banner" | "instruction_icon"
 
 /** Uploads an event icon (max 2 MB), cover image or banner (max 10 MB each) to S3; returns its URL. */
 export function uploadEventImage(file: File, kind: EventImageKind): Promise<string> {
