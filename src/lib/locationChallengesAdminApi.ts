@@ -18,6 +18,7 @@ export interface LocationChallengeEvent {
   theme_color: string | null
   icon_url: string | null
   image_url: string | null
+  banner_url: string | null
   tag: string | null
   title: string
   description: string | null
@@ -64,6 +65,7 @@ export interface LocationChallengeEventPayload {
   theme_color?: string | null
   icon_url?: string | null
   image_url?: string | null
+  banner_url?: string | null
   tag?: string
   title: string
   description?: string
@@ -125,9 +127,9 @@ export function endEvent(eventId: string, reason?: string): Promise<LocationChal
   })
 }
 
-export type EventImageKind = "icon" | "image"
+export type EventImageKind = "icon" | "image" | "banner"
 
-/** Uploads an event icon (max 2 MB) or cover image (max 10 MB) to S3; returns its URL. */
+/** Uploads an event icon (max 2 MB), cover image or banner (max 10 MB each) to S3; returns its URL. */
 export function uploadEventImage(file: File, kind: EventImageKind): Promise<string> {
   const body = new FormData()
   body.append("file", file)

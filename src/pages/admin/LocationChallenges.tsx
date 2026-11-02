@@ -107,7 +107,7 @@ const EMPTY_FORM = {
   startsAt: { date: undefined, time: "09:00" } as DatePart,
   endsAt: { date: undefined, time: "17:00" } as DatePart,
   geofence: EMPTY_GEOFENCE as Geofence,
-  branding: { themeColor: "", iconUrl: "", imageUrl: "" } as EventBranding,
+  branding: { themeColor: "", iconUrl: "", imageUrl: "", bannerUrl: "" } as EventBranding,
 };
 
 const HEX_COLOR = /^#[0-9A-Fa-f]{6}$/;
@@ -292,6 +292,7 @@ const LocationChallenges = () => {
         themeColor: ev.theme_color ?? "",
         iconUrl: ev.icon_url ?? "",
         imageUrl: ev.image_url ?? "",
+        bannerUrl: ev.banner_url ?? "",
       },
     });
     setDialogOpen(true);
@@ -338,6 +339,7 @@ const LocationChallenges = () => {
       theme_color: branding.themeColor || null,
       icon_url: branding.iconUrl || null,
       image_url: branding.imageUrl || null,
+      banner_url: branding.bannerUrl || null,
     };
 
     if (editingEvent) {
@@ -743,12 +745,24 @@ const LocationChallenges = () => {
 
           {detailQuery.data && (
             <div className="space-y-6">
-              {detailQuery.data.event.image_url && (
+              {detailQuery.data.event.banner_url && (
                 <img
-                  src={detailQuery.data.event.image_url}
-                  alt=""
-                  className="h-40 w-full rounded-md border object-cover"
+                  src={detailQuery.data.event.banner_url}
+                  alt="Banner"
+                  className="h-36 w-full rounded-md border object-cover"
                 />
+              )}
+              {detailQuery.data.event.image_url && (
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Cover image
+                  </p>
+                  <img
+                    src={detailQuery.data.event.image_url}
+                    alt="Cover"
+                    className="h-32 w-48 rounded-md border object-cover"
+                  />
+                </div>
               )}
               <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                 <span>Location: <strong className="text-foreground">{detailQuery.data.event.location}</strong></span>

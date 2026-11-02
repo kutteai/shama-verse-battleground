@@ -11,6 +11,7 @@ export interface EventBranding {
   themeColor: string;
   iconUrl: string;
   imageUrl: string;
+  bannerUrl: string;
 }
 
 const PRESET_COLORS = [
@@ -25,6 +26,7 @@ const ACCEPT = "image/png,image/jpeg,image/webp,image/gif";
 const MAX_BYTES: Record<EventImageKind, number> = {
   icon: 2 * 1024 * 1024,
   image: 10 * 1024 * 1024,
+  banner: 10 * 1024 * 1024,
 };
 
 const ImageUploadField = ({
@@ -203,10 +205,19 @@ const EventBrandingFields = ({
       <ImageUploadField
         kind="image"
         label="Cover image"
-        hint="Wide banner, PNG, JPEG, WebP or GIF, up to 10 MB."
+        hint="Card/thumbnail image, PNG, JPEG, WebP or GIF, up to 10 MB."
         value={value.imageUrl}
         onChange={(imageUrl) => patch({ imageUrl })}
-        previewClassName="h-14 w-28"
+        previewClassName="h-14 w-20"
+      />
+
+      <ImageUploadField
+        kind="banner"
+        label="Banner image"
+        hint="Wide header banner (about 3:1), PNG, JPEG, WebP or GIF, up to 10 MB."
+        value={value.bannerUrl}
+        onChange={(bannerUrl) => patch({ bannerUrl })}
+        previewClassName="h-14 w-36"
       />
     </div>
   );
