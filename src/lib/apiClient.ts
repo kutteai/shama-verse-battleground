@@ -22,8 +22,10 @@ export class ApiError extends Error {
 export async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem("admin_token")
 
+  // FormData (file uploads) needs the browser to set the multipart boundary.
+  const isFormData = options.body instanceof FormData
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+    ...(isFormData ? {} : { "Content-Type": "application/json" }),
     ...(options.headers as Record<string, string>),
   }
   if (token) {

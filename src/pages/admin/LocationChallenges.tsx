@@ -67,6 +67,7 @@ import {
 import { queryKeys } from "@/lib/queryKeys";
 import GeofencePicker, { GeofencePreview } from "@/components/location/GeofencePicker";
 import { EMPTY_GEOFENCE, formatRadius, type Geofence } from "@/components/location/geofence";
+import EventBrandingFields, { type EventBranding } from "@/components/location/EventBrandingFields";
 
 const formatDateTime = (iso: string) =>
   new Intl.DateTimeFormat("en-US", {
@@ -106,7 +107,10 @@ const EMPTY_FORM = {
   startsAt: { date: undefined, time: "09:00" } as DatePart,
   endsAt: { date: undefined, time: "17:00" } as DatePart,
   geofence: EMPTY_GEOFENCE as Geofence,
+  branding: { themeColor: "", iconUrl: "", imageUrl: "" } as EventBranding,
 };
+
+const HEX_COLOR = /^#[0-9A-Fa-f]{6}$/;
 
 const hasGeofence = (ev: LocationChallengeEvent) =>
   ev.center_latitude != null && ev.center_longitude != null && ev.radius_meters != null;
@@ -284,6 +288,11 @@ const LocationChallenges = () => {
       startsAt: toDatePart(ev.starts_at),
       endsAt: toDatePart(ev.ends_at),
       geofence: geofenceFromEvent(ev),
+      branding: {
+        themeColor: ev.theme_color ?? "",
+        iconUrl: ev.icon_url ?? "",
+        imageUrl: ev.image_url ?? "",
+      },
     });
     setDialogOpen(true);
   };
@@ -303,7 +312,11 @@ const LocationChallenges = () => {
       toast.error("End time must be after start time.");
       return;
     }
-    const { geofence } = form;
+    const { geofence, branding } = form;
+    if (branding.themeColor && !HEX_COLOR.test(branding.themeColor)) {
+      toast.error("Theme color must be a 6-digit hex color like #2563EB.");
+      return;
+    }
     if (geofence.enabled && (geofence.latitude == null || geofence.longitude == null)) {
       toast.error("Place the geofence center: search an address, click the map, or type coordinates.");
       return;
@@ -321,6 +334,10 @@ const LocationChallenges = () => {
       center_latitude: geofence.enabled ? geofence.latitude : null,
       center_longitude: geofence.enabled ? geofence.longitude : null,
       radius_meters: geofence.enabled ? geofence.radiusMeters : null,
+      // Empty values send null, which clears them on edit.
+      theme_color: branding.themeColor || null,
+      icon_url: branding.iconUrl || null,
+      image_url: branding.imageUrl || null,
     };
 
     if (editingEvent) {
@@ -469,11 +486,35 @@ const LocationChallenges = () => {
                   ) : (
                     events.map((ev) => (
                       <TableRow key={ev.id}>
-                        <TableCell className="font-medium max-w-[200px] truncate">{ev.title}</TableCell>
+                        <TableCell className="font-medium max-w-[240px]">
+                          <div className="flex items-center gap-2">
+                            {ev.icon_url ? (
+                              <img
+                                src={ev.icon_url}
+                                alt=""
+                                className="h-7 w-7 shrink-0 rounded-md border object-cover"
+                              />
+                            ) : ev.theme_color ? (
+                              <span
+                                className="h-3 w-3 shrink-0 rounded-full"
+                                style={{ backgroundColor: ev.theme_color }}
+                              />
+                            ) : null}
+                            <span className="truncate">{ev.title}</span>
+                          </div>
+                        </TableCell>
                         <TableCell className="text-sm">
                           {ev.location}
                           {ev.tag && (
-                            <Badge variant="outline" className="ml-2 font-mono text-xs">
+                            <Badge
+                              variant="outline"
+                              className="ml-2 font-mono text-xs"
+                              style={
+                                ev.theme_color
+                                  ? { borderColor: ev.theme_color, color: ev.theme_color }
+                                  : undefined
+                              }
+                            >
                               {ev.tag}
                             </Badge>
                           )}
@@ -617,6 +658,10 @@ const LocationChallenges = () => {
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
               />
             </div>
+            <EventBrandingFields
+              value={form.branding}
+              onChange={(branding) => setForm((f) => ({ ...f, branding }))}
+            />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <DateTimeField
                 label="Starts At"
@@ -674,6 +719,13 @@ const LocationChallenges = () => {
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
+              {detailQuery.data?.event.icon_url && (
+                <img
+                  src={detailQuery.data.event.icon_url}
+                  alt=""
+                  className="h-8 w-8 rounded-md border object-cover"
+                />
+              )}
               {detailQuery.data?.event.title ?? "Event Detail"}
               {detailQuery.data && renderStatusBadge(detailQuery.data.event)}
             </DialogTitle>
@@ -691,12 +743,32 @@ const LocationChallenges = () => {
 
           {detailQuery.data && (
             <div className="space-y-6">
+              {detailQuery.data.event.image_url && (
+                <img
+                  src={detailQuery.data.event.image_url}
+                  alt=""
+                  className="h-40 w-full rounded-md border object-cover"
+                />
+              )}
               <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                 <span>Location: <strong className="text-foreground">{detailQuery.data.event.location}</strong></span>
                 {detailQuery.data.event.tag && (
                   <>
                     <span>·</span>
                     <span>Tag: <strong className="text-foreground font-mono">{detailQuery.data.event.tag}</strong></span>
+                  </>
+                )}
+                {detailQuery.data.event.theme_color && (
+                  <>
+                    <span>·</span>
+                    <span className="inline-flex items-center gap-1">
+                      Color:
+                      <span
+                        className="inline-block h-3 w-3 rounded-full border"
+                        style={{ backgroundColor: detailQuery.data.event.theme_color }}
+                      />
+                      <strong className="text-foreground font-mono">{detailQuery.data.event.theme_color}</strong>
+                    </span>
                   </>
                 )}
                 <span>·</span>

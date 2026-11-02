@@ -14,6 +14,10 @@ export interface LocationChallengeEvent {
   center_latitude: number | null
   center_longitude: number | null
   radius_meters: number | null
+  /** Branding: hex color like "#2563EB", and S3 URLs from uploadEventImage(). */
+  theme_color: string | null
+  icon_url: string | null
+  image_url: string | null
   tag: string | null
   title: string
   description: string | null
@@ -57,6 +61,9 @@ export interface LocationChallengeEventPayload {
   center_latitude?: number | null
   center_longitude?: number | null
   radius_meters?: number | null
+  theme_color?: string | null
+  icon_url?: string | null
+  image_url?: string | null
   tag?: string
   title: string
   description?: string
@@ -116,4 +123,17 @@ export function endEvent(eventId: string, reason?: string): Promise<LocationChal
     method: "POST",
     body: JSON.stringify({ reason: reason ?? "" }),
   })
+}
+
+export type EventImageKind = "icon" | "image"
+
+/** Uploads an event icon (max 2 MB) or cover image (max 10 MB) to S3; returns its URL. */
+export function uploadEventImage(file: File, kind: EventImageKind): Promise<string> {
+  const body = new FormData()
+  body.append("file", file)
+  body.append("kind", kind)
+  return apiRequest<{ kind: EventImageKind; file_url: string }>(
+    `/api/v1/location-challenges/admin/uploads/`,
+    { method: "POST", body }
+  ).then((data) => data.file_url)
 }
