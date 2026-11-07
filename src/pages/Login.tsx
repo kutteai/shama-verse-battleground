@@ -1,6 +1,5 @@
 
 import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,11 +11,8 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const navigate = useNavigate();
-  const location = useLocation();
   const { login } = useAuth();
   
-  const from = location.state?.from?.pathname || '/dashboard';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +26,6 @@ const Login = () => {
     
     try {
       await login(email, password);
-      navigate(from, { replace: true });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Login failed");
       setIsSubmitting(false);

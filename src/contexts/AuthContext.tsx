@@ -2,6 +2,7 @@
 import React, { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { adminLogin } from '@/lib/adminAuthApi';
+import { getSavedUser, redirectToLogin, saveSession, safeReturnPath } from '@/lib/session';
 
 // Define the user type with isAdmin property
 export interface User {
@@ -42,13 +43,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const location = useLocation();
 
   useEffect(() => {
-    // Check if there's a user in localStorage (simulating persisted auth)
-    const savedUser = localStorage.getItem('user');
-    
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-    
+    // Restore the session only when both the user and the token are saved.
+    setUser(getSavedUser<User>());
     setIsLoading(false);
   }, []);
 
@@ -68,12 +64,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       };
 
       setUser(mappedUser);
-      localStorage.setItem('user', JSON.stringify(mappedUser));
-      localStorage.setItem('admin_token', token);
+      saveSession(token, mappedUser);
 
-      // Redirect to dashboard or the page they were trying to access
-      const origin = location.state?.from?.pathname || '/dashboard';
-      navigate(origin);
+      // Back to the page they were on (route guard or expired session), else the dashboard.
+      const next = new URLSearchParams(location.search).get('next');
+      const origin =
+        safeReturnPath(location.state?.from?.pathname) ?? safeReturnPath(next) ?? '/dashboard';
+      navigate(origin, { replace: true });
     } finally {
       setIsLoading(false);
     }
@@ -81,9 +78,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('user');
-    localStorage.removeItem('admin_token');
-    navigate('/login');
+    // Full page load: clears cached data and any open menu (navigating from
+    // inside the closing dropdown could leave the page unclickable).
+    redirectToLogin();
   };
 
   const value = {

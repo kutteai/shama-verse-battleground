@@ -272,7 +272,7 @@ export default function DashboardLayout({
                 <DropdownMenuItem disabled>Profile</DropdownMenuItem>
                 <DropdownMenuItem disabled>Settings</DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={logout}>
+                <DropdownMenuItem onSelect={() => logout()}>
                   <LogOut className="mr-2 h-4 w-4" /> Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>
