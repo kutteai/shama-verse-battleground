@@ -61,6 +61,9 @@ import {
   createEvent,
   updateEvent,
   endEvent,
+  type CategoryPrize,
+  type CompetitionCategory,
+  type CompetitionPlace,
   type LocationChallengeEvent,
   type LocationChallengeEventPayload,
 } from "@/lib/locationChallengesAdminApi";
@@ -69,7 +72,13 @@ import GeofencePicker, { GeofencePreview } from "@/components/location/GeofenceP
 import { EMPTY_GEOFENCE, formatRadius, type Geofence } from "@/components/location/geofence";
 import EventBrandingFields, { type EventBranding } from "@/components/location/EventBrandingFields";
 import InstructionsEditor, { type InstructionDraft } from "@/components/location/InstructionsEditor";
-import RichTextEditor from "@/components/location/RichTextEditor";
+import CompetitionPlacesPicker, {
+  CompetitionPlacesPreview,
+} from "@/components/location/CompetitionPlacesPicker";
+import CompetitionFields, {
+  EMPTY_COMPETITION_DETAILS,
+  type CompetitionDetails,
+} from "@/components/location/CompetitionFields";
 
 const formatDateTime = (iso: string) =>
   new Intl.DateTimeFormat("en-US", {
@@ -112,6 +121,8 @@ const EMPTY_FORM = {
   branding: { themeColor: "", iconUrl: "", imageUrl: "", bannerUrl: "" } as EventBranding,
   instructions: [] as InstructionDraft[],
   rules: "",
+  places: [] as CompetitionPlace[],
+  competition: EMPTY_COMPETITION_DETAILS as CompetitionDetails,
 };
 
 const HEX_COLOR = /^#[0-9A-Fa-f]{6}$/;
@@ -302,13 +313,62 @@ const LocationChallenges = () => {
         .sort((a, b) => a.sort_order - b.sort_order)
         .map((i) => ({ key: i.id, text: i.text, iconUrl: i.icon_url ?? "" })),
       rules: ev.rules ?? "",
+      places: ev.places ?? [],
+      competition: {
+        titleShort: ev.title_short ?? "",
+        locationsText: ev.locations_text ?? "",
+        locationShortName: ev.location_short_name ?? "",
+        sponsorName: ev.sponsor_name ?? "",
+        sponsorIconUrl: ev.sponsor_icon_url ?? "",
+        badgeName: ev.badge_name ?? "",
+        badgeIconUrl: ev.badge_icon_url ?? "",
+        prizes: Object.fromEntries(
+          (ev.category_prizes ?? []).map((p) => [p.category, String(p.amount)])
+        ) as CompetitionDetails["prizes"],
+      },
     });
     setDialogOpen(true);
   };
 
   const handleSave = () => {
-    if (!form.location.trim() || !form.title.trim()) {
-      toast.error("Location and title are required.");
+    if (!form.title.trim()) {
+      toast.error("Title is required.");
+      return;
+    }
+    if (form.places.length === 0) {
+      toast.error("Add at least one place to the competition area.");
+      return;
+    }
+    const { competition } = form;
+    const prizeEntries = Object.entries(competition.prizes) as [CompetitionCategory, string][];
+    if (prizeEntries.length === 0) {
+      toast.error("Select at least one category.");
+      return;
+    }
+    const categoryPrizes: CategoryPrize[] = [];
+    for (const [category, text] of prizeEntries) {
+      const amount = Number(text);
+      if (text.trim() === "" || !Number.isFinite(amount) || amount < 0) {
+        toast.error(`Enter a prize amount for ${category}.`);
+        return;
+      }
+      categoryPrizes.push({ category, amount });
+    }
+    const required: [string, string][] = [
+      [competition.titleShort, "Title short"],
+      [competition.locationShortName, "Physical location short name"],
+      [competition.locationsText, "Locations"],
+      [competition.sponsorName, "Sponsor name"],
+      [competition.sponsorIconUrl, "Sponsor logo"],
+      [competition.badgeName, "Badge name"],
+      [competition.badgeIconUrl, "Badge icon"],
+      [form.branding.iconUrl, "Competition icon"],
+      [form.branding.bannerUrl, "Header image"],
+      [form.rules, "Rules"],
+    ];
+    const missing = required.filter(([v]) => !v.trim()).map(([, label]) => label);
+    if (missing.length > 0) {
+      toast.error(`Required: ${missing.join(", ")}.`);
       return;
     }
     const startsAtIso = combineDatePart(form.startsAt);
@@ -338,7 +398,8 @@ const LocationChallenges = () => {
     }
 
     const payload: LocationChallengeEventPayload = {
-      location: form.location.trim(),
+      // Blank uses the first place's name.
+      location: form.location.trim() || form.places[0].name,
       tag: form.tag.trim() || undefined,
       title: form.title.trim(),
       description: form.description.trim() || undefined,
@@ -354,7 +415,16 @@ const LocationChallenges = () => {
       icon_url: branding.iconUrl || null,
       image_url: branding.imageUrl || null,
       banner_url: branding.bannerUrl || null,
-      rules: form.rules || null,
+      rules: form.rules.trim() || null,
+      title_short: competition.titleShort.trim(),
+      locations_text: competition.locationsText.trim(),
+      location_short_name: competition.locationShortName.trim(),
+      sponsor_name: competition.sponsorName.trim(),
+      sponsor_icon_url: competition.sponsorIconUrl,
+      badge_name: competition.badgeName.trim(),
+      badge_icon_url: competition.badgeIconUrl,
+      places: form.places,
+      category_prizes: categoryPrizes,
       // Sent as one ordered list; it replaces the event's existing instructions.
       instructions: instructions.map((i, index) => ({
         text: i.text.trim(),
@@ -495,6 +565,7 @@ const LocationChallenges = () => {
                     <TableHead>Location</TableHead>
                     <TableHead>Window</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Joined</TableHead>
                     <TableHead>Active</TableHead>
                     <TableHead className="w-10"></TableHead>
                   </TableRow>
@@ -502,7 +573,7 @@ const LocationChallenges = () => {
                 <TableBody>
                   {events.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
+                      <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
                         No events found.
                       </TableCell>
                     </TableRow>
@@ -552,6 +623,7 @@ const LocationChallenges = () => {
                           {formatDateTime(ev.starts_at)} &rarr; {formatDateTime(ev.ends_at)}
                         </TableCell>
                         <TableCell>{renderStatusBadge(ev)}</TableCell>
+                        <TableCell className="text-right tabular-nums">{ev.participants_count ?? 0}</TableCell>
                         <TableCell>
                           <Switch
                             checked={ev.is_active}
@@ -631,21 +703,36 @@ const LocationChallenges = () => {
           <DialogHeader>
             <DialogTitle>{editingEvent ? "Edit Event" : "Create Event"}</DialogTitle>
             <DialogDescription>
-              While live, users in this event's area can only challenge other users in the same area.
+              Artists in the area join from the app. While live, joined artists can only challenge other
+              members in the same category.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="event-location">Location</Label>
+              <Label htmlFor="event-title">Title</Label>
+              <Input
+                id="event-title"
+                placeholder="e.g. Shama Challenge Champion Competition USVI"
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+              />
+            </div>
+            <CompetitionPlacesPicker
+              value={form.places}
+              onChange={(places) => setForm((f) => ({ ...f, places }))}
+            />
+            <CompetitionFields
+              value={form.competition}
+              onChange={(competition) => setForm((f) => ({ ...f, competition }))}
+            />
+            <div className="space-y-2">
+              <Label htmlFor="event-location">Location label (optional)</Label>
               <Input
                 id="event-location"
-                placeholder="e.g. Boston"
+                placeholder="Defaults to the first place, e.g. U.S. Virgin Islands"
                 value={form.location}
                 onChange={(e) => setForm({ ...form, location: e.target.value })}
               />
-              <p className="text-xs text-muted-foreground">
-                Event name for the area. Users without GPS are matched by their typed location against this.
-              </p>
             </div>
             <GeofencePicker
               value={form.geofence}
@@ -661,15 +748,6 @@ const LocationChallenges = () => {
                 placeholder="Short code shown on qualifying users, e.g. USVI — falls back to location if left blank"
                 value={form.tag}
                 onChange={(e) => setForm({ ...form, tag: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="event-title">Title</Label>
-              <Input
-                id="event-title"
-                placeholder="e.g. Boston Weekend Showdown"
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
               />
             </div>
             <div className="space-y-2">
@@ -690,14 +768,17 @@ const LocationChallenges = () => {
               onChange={(instructions) => setForm((f) => ({ ...f, instructions }))}
             />
             <div className="space-y-2">
-              <Label>Rules</Label>
-              <RichTextEditor
+              <Label htmlFor="event-rules">Rules</Label>
+              <Textarea
+                id="event-rules"
+                rows={8}
+                className="font-mono text-sm"
+                placeholder={"1. You must be physically located in the USVI\n2. ..."}
                 value={form.rules}
-                onChange={(rules) => setForm((f) => ({ ...f, rules }))}
-                placeholder="Write the event rules: eligibility, scoring, conduct…"
+                onChange={(e) => setForm({ ...form, rules: e.target.value })}
               />
               <p className="text-xs text-muted-foreground">
-                Formatting, lists and links are kept; anything else is removed when saved.
+                Markdown: **bold**, *italic*, ## Heading, 1. numbered and - bulleted lists. Line breaks are kept.
               </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -841,6 +922,49 @@ const LocationChallenges = () => {
                 )}
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Prizes · {detailQuery.data.event.total_prize?.display}
+                  </p>
+                  {(detailQuery.data.event.category_prizes ?? []).map((p) => (
+                    <p key={p.category}>
+                      {p.category}: <strong>${p.amount.toLocaleString()}</strong>
+                    </p>
+                  ))}
+                  <p className="text-muted-foreground">
+                    {detailQuery.data.event.participants_count ?? 0} artist(s) joined
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  {detailQuery.data.event.sponsor_name && (
+                    <div className="flex items-center gap-2">
+                      {detailQuery.data.event.sponsor_icon_url && (
+                        <img src={detailQuery.data.event.sponsor_icon_url} alt="" className="h-8 w-8 rounded-md border object-cover" />
+                      )}
+                      <span>Sponsor: <strong>{detailQuery.data.event.sponsor_name}</strong></span>
+                    </div>
+                  )}
+                  {detailQuery.data.event.badge_name && (
+                    <div className="flex items-center gap-2">
+                      {detailQuery.data.event.badge_icon_url && (
+                        <img src={detailQuery.data.event.badge_icon_url} alt="" className="h-8 w-8 rounded-md border object-cover" />
+                      )}
+                      <span>Badge: <strong>{detailQuery.data.event.badge_name}</strong></span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {(detailQuery.data.event.places ?? []).length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Area · {detailQuery.data.event.places.map((p) => p.name).join(", ")}
+                  </p>
+                  <CompetitionPlacesPreview places={detailQuery.data.event.places} />
+                </div>
+              )}
+
               {hasGeofence(detailQuery.data.event) && (
                 <div className="space-y-2">
                   <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -887,11 +1011,10 @@ const LocationChallenges = () => {
                   <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Rules
                   </p>
-                  {/* Sanitized server-side (nh3) before it is stored. */}
-                  <div
-                    className="prose prose-sm dark:prose-invert max-w-none rounded-md border p-3"
-                    dangerouslySetInnerHTML={{ __html: detailQuery.data.event.rules }}
-                  />
+                  {/* Markdown source, shown as typed (the app renders it). */}
+                  <div className="whitespace-pre-wrap rounded-md border p-3 font-mono text-sm">
+                    {detailQuery.data.event.rules}
+                  </div>
                 </div>
               )}
 

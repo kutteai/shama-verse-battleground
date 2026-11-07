@@ -28,9 +28,11 @@ const MAX_BYTES: Record<EventImageKind, number> = {
   image: 10 * 1024 * 1024,
   banner: 10 * 1024 * 1024,
   instruction_icon: 2 * 1024 * 1024,
+  sponsor_icon: 2 * 1024 * 1024,
+  badge_icon: 2 * 1024 * 1024,
 };
 
-const ImageUploadField = ({
+export const ImageUploadField = ({
   kind,
   label,
   hint,

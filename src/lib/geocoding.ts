@@ -17,6 +17,25 @@ interface NominatimPlace {
   lat: string
   lon: string
   address?: Record<string, string>
+  name?: string
+  osm_type?: string
+  osm_id?: number
+  addresstype?: string
+  type?: string
+  /** [south, north, west, east] as strings. */
+  boundingbox?: [string, string, string, string]
+}
+
+/** A searchable area for competitions: its name, type and viewport box. */
+export interface PlaceResult {
+  placeId: string
+  name: string
+  displayName: string
+  type: string
+  neLat: number
+  neLng: number
+  swLat: number
+  swLng: number
 }
 
 const placeNameFrom = (address?: Record<string, string>): string | null => {
@@ -64,4 +83,32 @@ export async function reverseGeocode(
   const place: NominatimPlace & { error?: string } = await res.json()
   if (place.error) return null
   return { ...toResult(place), latitude, longitude }
+}
+
+const round6 = (n: number) => Math.round(n * 1e6) / 1e6
+
+/** Search for areas (countries, cities, islands, regions) with their bounding boxes. */
+export async function searchPlaces(query: string, signal?: AbortSignal): Promise<PlaceResult[]> {
+  const params = new URLSearchParams({ q: query, format: "jsonv2", addressdetails: "1", limit: "8" })
+  const res = await fetch(`${NOMINATIM_URL}/search?${params}`, {
+    signal,
+    headers: { "Accept-Language": "en" },
+  })
+  if (!res.ok) throw new Error(`Place search failed (${res.status})`)
+  const places: NominatimPlace[] = await res.json()
+  return places
+    .filter((p) => p.boundingbox && p.osm_type && p.osm_id != null)
+    .map((p) => {
+      const [south, north, west, east] = p.boundingbox!.map(Number)
+      return {
+        placeId: `osm:${p.osm_type}/${p.osm_id}`,
+        name: p.name || p.display_name.split(",")[0],
+        displayName: p.display_name,
+        type: p.addresstype || p.type || "place",
+        neLat: round6(north),
+        neLng: round6(east),
+        swLat: round6(south),
+        swLng: round6(west),
+      }
+    })
 }

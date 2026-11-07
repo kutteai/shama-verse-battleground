@@ -6,6 +6,39 @@ export interface LocationChallengeAdminUser {
   profile_pic?: string | null
 }
 
+/** The competition categories: the artist talents the app sends, exactly. */
+export const COMPETITION_CATEGORIES = [
+  "Hip-hop/Rap",
+  "Comedian",
+  "Singer",
+  "Spoken Word",
+  "Beat Producer",
+] as const
+export type CompetitionCategory = (typeof COMPETITION_CATEGORIES)[number]
+
+/** One area of a competition; the competition area is the union of their boxes. */
+export interface CompetitionPlace {
+  place_id: string
+  name: string
+  type: string
+  ne_lat: number
+  ne_lng: number
+  sw_lat: number
+  sw_lng: number
+}
+
+export interface CategoryPrize {
+  category: CompetitionCategory
+  amount: number
+}
+
+export interface Money {
+  amount: number
+  currency: string
+  /** Built by the server, e.g. "$1,000". */
+  display: string
+}
+
 export interface LocationChallengeEvent {
   id: string
   location: string
@@ -19,8 +52,22 @@ export interface LocationChallengeEvent {
   icon_url: string | null
   image_url: string | null
   banner_url: string | null
-  /** Sanitized HTML from the rules editor. */
+  /** Markdown. */
   rules: string | null
+  title_short: string | null
+  locations_text: string | null
+  location_short_name: string | null
+  currency: string
+  sponsor_name: string | null
+  sponsor_icon_url: string | null
+  badge_name: string | null
+  badge_icon_url: string | null
+  places: CompetitionPlace[]
+  category_prizes: CategoryPrize[]
+  /** Sum of the category prizes. */
+  total_prize: Money
+  /** Artists currently joined. */
+  participants_count: number
   instructions: LocationChallengeInstruction[]
   tag: string | null
   title: string
@@ -74,7 +121,8 @@ export interface PaginatedLocationChallengeEvents {
 }
 
 export interface LocationChallengeEventPayload {
-  location: string
+  /** Optional: defaults to the first place's name. */
+  location?: string
   address?: string | null
   center_latitude?: number | null
   center_longitude?: number | null
@@ -84,6 +132,17 @@ export interface LocationChallengeEventPayload {
   image_url?: string | null
   banner_url?: string | null
   rules?: string | null
+  title_short?: string | null
+  locations_text?: string | null
+  location_short_name?: string | null
+  sponsor_name?: string | null
+  sponsor_icon_url?: string | null
+  badge_name?: string | null
+  badge_icon_url?: string | null
+  /** Replaces the saved list when sent. */
+  places?: CompetitionPlace[]
+  /** Replaces the saved list when sent. Categories and the total prize come from these rows. */
+  category_prizes?: CategoryPrize[]
   /** Replaces the event's whole instruction list when sent. */
   instructions?: LocationChallengeInstructionPayload[]
   tag?: string
@@ -147,7 +206,13 @@ export function endEvent(eventId: string, reason?: string): Promise<LocationChal
   })
 }
 
-export type EventImageKind = "icon" | "image" | "banner" | "instruction_icon"
+export type EventImageKind =
+  | "icon"
+  | "image"
+  | "banner"
+  | "instruction_icon"
+  | "sponsor_icon"
+  | "badge_icon"
 
 /** Uploads an event icon (max 2 MB), cover image or banner (max 10 MB each) to S3; returns its URL. */
 export function uploadEventImage(file: File, kind: EventImageKind): Promise<string> {
